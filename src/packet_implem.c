@@ -38,12 +38,12 @@ void pkt_del(pkt_t *pkt)
 
 pkt_status_code pkt_decode(const char *data, const size_t len, pkt_t *pkt)
 {
-    /* Your code will be inserted here */
+    // TODO : Fonction pour décoder un paquet (en gros ça passe sur tous les éléments du header un par un, puis sur le payload, le crc etc)
 }
 
 pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t *len)
 {
-    /* Your code will be inserted here */
+    // TODO : Same que decode dans le sens inverse
 }
 
 ptypes_t pkt_get_type  (const pkt_t* pkt)
