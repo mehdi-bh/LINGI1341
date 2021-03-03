@@ -47,7 +47,7 @@ debug: CFLAGS += -D_DEBUG
 debug: clean all
 
 # Place the zip in the parent repository of the project
-ZIP_NAME="../projet1_nom1_nom2.zip"
+ZIP_NAME="../projet1_benhaddou_hennebo.zip"
 
 # A zip target, to help you have a proper zip file. You probably need to adapt this code.
 zip:
