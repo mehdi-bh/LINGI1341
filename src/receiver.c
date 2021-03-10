@@ -2,6 +2,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "log.h"
 
@@ -10,7 +14,9 @@ int print_usage(char *prog_name) {
     return EXIT_FAILURE;
 }
 
-
+// gcc receiver.c -o receiver
+// ./receiver ipv6 port
+// 2a02:2788:1a4:552:eee9:bbda:b6d0:4e08
 int main(int argc, char **argv) {
     int opt;
 
@@ -54,5 +60,19 @@ int main(int argc, char **argv) {
     ERROR("This is not an error, %s", "now let's code!");
 
     // Now let's code!
+    int sock = socket(AF_INET6, SOCK_DGRAM, 0);
+
+    // REGISTER 
+    struct sockaddr_in6 listener_addr;
+    memset(&listener_addr, 0, sizeof(struct sockaddr_in6));
+    listener_addr.sin6_family = AF_INET6;
+    listener_addr.sin6_port = htons(listen_port);
+    inet_pton(AF_INET6, listen_ip, &listener_addr.sin6_addr);
+
+    bind(sock, (const struct sockaddr *) &listener_addr, sizeof(listener_addr));
+    char msg[32];
+    recv(sock, msg, 32, 0);
+    printf("%s\n", msg);
+
     return EXIT_SUCCESS;
 }
