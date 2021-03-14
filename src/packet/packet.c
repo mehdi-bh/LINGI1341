@@ -1,7 +1,5 @@
 #include "packet.h"
 
-/* Extra #includes */
-/* Your code will be inserted here */
 struct __attribute__((__packed__)) pkt {
     uint8_t type        : 2;
     uint8_t tr          : 1;
@@ -13,11 +11,6 @@ struct __attribute__((__packed__)) pkt {
     char* payload;
     uint32_t crc2       ;
 }pkt;
-
-
-
-/* Extra code */
-/* Your code will be inserted here */
 
 pkt_t* pkt_new()
 {
@@ -381,8 +374,8 @@ ssize_t predict_header_length(const pkt_t *pkt)
     return (ssize_t)6;
 }
 
-void print_data(pkt_t* pkt){
-	printf("type: %d\n truncated: %d\n window: %d\n length: %d\n seqnum %d\n timestamp: %d\ncrc1: %d\n payload: %s\n",
+void pkt_print(pkt_t* pkt){
+	printf("type: %d\ntruncated: %d\nwindow: %d\nlength: %d\nseqnum %d\ntimestamp: %d\ncrc1: %d\npayload: %s\n",
 		pkt->type, pkt->tr, pkt->window, pkt->length,pkt->seqnum,pkt->timestamp, pkt->crc1, pkt->payload);
 }
 
