@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "packet/packet.h"
 #include "logs/log.h"
@@ -5,13 +7,55 @@
 #include "buffer/buffer.h"
 
 #define BUFF_LEN 
+#define WINDOW 31
+
+int fd = STDIN_FILENO;
+int seqnum = 0;
+
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
     return EXIT_FAILURE;
 }
 
+pkt_t* read_file(buffer_t* buffer, int fd){
+    if(!buffer){
+        ERROR("Buffer is null");
+        return NULL;
+    }
+    
+    char paylaod[MAX_PAYLOAD_SIZE];
+    ssize_t readed = read(fd,paylaod,MAX_PAYLOAD_SIZE);
 
+    if(readed == 0){
+        return NULL;
+    }
+
+    if(readed == -1){
+        ERROR("Can't read data in file");
+        return NULL;
+    }
+    pkt_t* pkt = pkt_new();
+    if(!pkt){
+        ERROR("Can't create packet");
+        return NULL;
+    }
+    pkt_status_code err = pkt_set_type(pkt,PTYPE_DATA);
+    err = pkt_set_tr(pkt,0);
+    err = pkt_set_window(pkt,0);
+    err = pkt_set_seqnum(pkt,(seqnum++ % 256));
+    err = pkt_set_payload(pkt,paylaod,readed);
+
+    if(err){
+        ERROR("Can't set data to the packet : %d",err);
+        pkt_del(pkt);
+        return NULL;
+    }
+
+    return pkt;
+}
+
+// gcc sender.c packet/packet.c logs/log.c socket/socket_manager.c buffer/buffer.c -o sender -lz
 // gcc sender.c -o sender
 // ./sender ipv6 port
 int main(int argc, char **argv) {
@@ -52,16 +96,20 @@ int main(int argc, char **argv) {
 
     ASSERT(1 == 1); // Try to change it to see what happens when it fails
     DEBUG_DUMP("Some bytes", 12); // You can use it with any pointer type
-    DEBUG("DEBUG TEST");
-    // This is not an error per-se.
+    
     ERROR("Sender has following arguments: filename is %s, stats_filename is %s, receiver_ip is %s, receiver_port is %u",
         filename, stats_filename, receiver_ip, receiver_port);
 
     DEBUG("You can only see me if %s", "you built me using `make debug`");
-    // Now let's code!
 
-    // REGISTER 
     struct sockaddr_in6 receiver_addr;
+
+    if(filename){
+        fd = open(filename,O_RDWR);
+        if(fd < 0){
+            ERROR("Can't open file %s",filename);
+        }
+    }
 
     const char* err = real_address(receiver_ip,&receiver_addr);
     if(err){
@@ -75,34 +123,20 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    char msg[100] = "hello, world!";
-    pkt_t* pkt = pkt_new();
-    pkt_set_type(pkt,PTYPE_DATA);
-    pkt_set_payload(pkt,msg,sizeof(msg));
-    pkt_set_tr(pkt,0);
-    pkt_set_seqnum(pkt,0);
-    pkt_set_window(pkt,31);
-    pkt_set_timestamp(pkt,10);
-
+    pkt_t* pkt;
     char buf[MAX_PKT_SIZE];
     ssize_t len;
-    pkt_print(pkt);
 
     buffer_t* buffer = buffer_init();
     
+    pkt_status_code st;
 
-    for(int i = 0; i < 10 ; i++){
-        strcat(msg," work ");
-        pkt_set_payload(pkt,msg,sizeof(msg));
-        pkt_set_seqnum(pkt,i);
+    while( (pkt = read_file(buffer,fd)) != NULL){
+        //pkt_print(pkt);
         buffer_enqueue(buffer,pkt);
+        st = pkt_encode(pkt,buf,&len);
+        send(sock,buf,len,0);
     }
-
-    for(int i = 0; i < buffer_size(buffer) ; i++){
-        pkt_status_code st = pkt_encode(buffer_get_pkt(buffer,i),buf,&len);
-        send(sock, buf,len, 0);
-    }
-
 
     return EXIT_SUCCESS;
 }
