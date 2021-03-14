@@ -2,6 +2,7 @@
 #include "packet/packet.h"
 #include "logs/log.h"
 #include "socket/socket_manager.h"
+#include "buffer/buffer.h"
 
 #define BUFF_LEN 
 
@@ -74,7 +75,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    char msg[32] = "hello, world!";
+    char msg[100] = "hello, world!";
     pkt_t* pkt = pkt_new();
     pkt_set_type(pkt,PTYPE_DATA);
     pkt_set_payload(pkt,msg,sizeof(msg));
@@ -87,14 +88,21 @@ int main(int argc, char **argv) {
     ssize_t len;
     pkt_print(pkt);
 
-    for(int i = 0; i < 5 ; i++){
+    buffer_t* buffer = buffer_init();
+    
+
+    for(int i = 0; i < 10 ; i++){
         strcat(msg," work ");
         pkt_set_payload(pkt,msg,sizeof(msg));
-        pkt_status_code st = pkt_encode(pkt,buf,&len);
-        printf("Error fdp : %i\n",st);
+        pkt_set_seqnum(pkt,i);
+        buffer_enqueue(buffer,pkt);
+    }
 
+    for(int i = 0; i < buffer_size(buffer) ; i++){
+        pkt_status_code st = pkt_encode(buffer_get_pkt(buffer,i),buf,&len);
         send(sock, buf,len, 0);
     }
-    
+
+
     return EXIT_SUCCESS;
 }
