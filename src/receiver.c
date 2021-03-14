@@ -6,9 +6,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include "packet/packet.h"
 #include "socket/socket_manager.h"
-
+#include "buffer/buffer.h"
 #include "logs/log.h"
 
 int print_usage(char *prog_name) {
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
     }
 
     char msg[MAX_PKT_SIZE];
-    for(int i = 0 ; i < 5 ; i++){
+    while(1){
         ssize_t received = recv(sock, msg, MAX_PKT_SIZE, 0);
         pkt_t* pkt = pkt_new();
         pkt_decode(msg,received,pkt);
