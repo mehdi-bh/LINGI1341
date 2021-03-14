@@ -6,9 +6,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "packet_implem.h"
+#include "packet.h"
 
-#include "log.h"
+#include "logs/log.h"
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-s stats_filename] listen_ip listen_port", prog_name);
