@@ -8,7 +8,7 @@
 #include <unistd.h> /* getopt */
 #include <sys/select.h>
 #include <sys/time.h>
-#include <sys/types.h>
+
 #include <string.h>
 /* Resolve the resource name to an usable IPv6 address
  * @address: The name to resolve
@@ -30,7 +30,6 @@ const char * real_address(const char *address, struct sockaddr_in6 *rval){
 
     int s = getaddrinfo(address,NULL,&hint,&result);
     if(s!=0){
-        
         return gai_strerror(s);
     }
 

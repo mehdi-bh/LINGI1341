@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "packet/packet.h"
+#include "socket/socket_manager.h"
 
 #include "logs/log.h"
 
@@ -61,23 +62,36 @@ int main(int argc, char **argv) {
     ERROR("This is not an error, %s", "now let's code!");
 
     // Now let's code!
-    int sock = socket(AF_INET6, SOCK_DGRAM, 0);
+    // int sock = socket(AF_INET6, SOCK_DGRAM, 0);
 
-    // REGISTER 
+    // // REGISTER 
     struct sockaddr_in6 listener_addr;
-    memset(&listener_addr, 0, sizeof(struct sockaddr_in6));
-    listener_addr.sin6_family = AF_INET6;
-    listener_addr.sin6_port = htons(listen_port);
-    inet_pton(AF_INET6, listen_ip, &listener_addr.sin6_addr);
+    // memset(&listener_addr, 0, sizeof(struct sockaddr_in6));
+    // listener_addr.sin6_family = AF_INET6;
+    // listener_addr.sin6_port = htons(listen_port);
+    // inet_pton(AF_INET6, listen_ip, &listener_addr.sin6_addr);    
 
-    bind(sock, (const struct sockaddr *) &listener_addr, sizeof(listener_addr));
+    // bind(sock, (const struct sockaddr *) &listener_addr, sizeof(listener_addr));
+
+    const char* err = real_address(listen_ip,&listener_addr);
+    if(err){
+        ERROR("Could not resolve hostname %s : %d",listen_ip,listen_port);
+        exit(EXIT_FAILURE);
+    }
+
+    int sock = create_socket(&listener_addr,listen_port,NULL,-1);
+    if(sock < 0){
+        ERROR("Failed to create socket at %s : %d",listen_ip,listen_port);
+        exit(EXIT_FAILURE);
+    }
+
     char msg[MAX_PKT_SIZE];
-    ssize_t received = recv(sock, msg, MAX_PKT_SIZE, 0);
-    pkt_t* pkt = pkt_new();
-    pkt_decode(msg,received,pkt);
-    pkt_print(pkt);
-    printf("%s\n",msg);
-    printf("%ld\n", received);
-
+    for(int i = 0 ; i < 5 ; i++){
+        ssize_t received = recv(sock, msg, MAX_PKT_SIZE, 0);
+        pkt_t* pkt = pkt_new();
+        pkt_decode(msg,received,pkt);
+        pkt_print(pkt);    
+        printf("%ld\n", received);
+    }
     return EXIT_SUCCESS;
 }
