@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "packet.h"
+#include "packet/packet.h"
 
 #include "logs/log.h"
 
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     ssize_t len;
     pkt_status_code st = pkt_encode(pkt,buf,&len);
     printf("Error fdp : %i\n",st);
-    print_data(pkt);
+    pkt_print(pkt);
 
     send(sock, buf,len, 0);
     

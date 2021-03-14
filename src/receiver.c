@@ -6,7 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "packet.h"
+#include "packet/packet.h"
 
 #include "logs/log.h"
 
@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
     ssize_t received = recv(sock, msg, MAX_PKT_SIZE, 0);
     pkt_t* pkt = pkt_new();
     pkt_decode(msg,received,pkt);
-    print_data(pkt);
+    pkt_print(pkt);
     printf("%s\n",msg);
     printf("%ld\n", received);
 

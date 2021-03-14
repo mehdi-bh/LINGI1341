@@ -139,6 +139,6 @@ pkt_status_code pkt_set_crc2(pkt_t*, const uint32_t crc2);
  */
 ssize_t predict_header_length(const pkt_t *pkt);
 
-void print_data(pkt_t* pkt);
+void pkt_print(pkt_t* pkt);
 
 #endif  /* __PACKET_INTERFACE_H_ */
