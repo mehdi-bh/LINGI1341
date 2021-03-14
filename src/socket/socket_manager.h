@@ -11,7 +11,7 @@
  * @sfd: The socket file descriptor. It is both bound and connected.
  * @return: as soon as stdin signals EOF
  */
-void read_write_loop(const int sfd);    
+void read_write_loop_receiver(const int sfd,const int fdOut);    
 
 /* Resolve the resource name to an usable IPv6 address
  * @address: The name to resolve

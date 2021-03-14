@@ -14,7 +14,6 @@ typedef struct node {
     struct node *next;
     struct node *prev;
     struct pkt *pkt;
-    uint8_t seqnum;
 } node_t;
 
 typedef struct buffer {

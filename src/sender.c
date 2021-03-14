@@ -11,6 +11,7 @@
 
 int fd = STDIN_FILENO;
 int seqnum = 0;
+int eof = 0;
 
 
 int print_usage(char *prog_name) {
@@ -23,11 +24,16 @@ pkt_t* read_file(buffer_t* buffer, int fd){
         ERROR("Buffer is null");
         return NULL;
     }
-    
+    // if(buffer->size > WINDOW){
+    //     ERROR("Buffer is full");
+    //     return NULL;
+    // }
+
     char paylaod[MAX_PAYLOAD_SIZE];
     ssize_t readed = read(fd,paylaod,MAX_PAYLOAD_SIZE);
 
     if(readed == 0){
+        eof = 1;
         return NULL;
     }
 
@@ -131,12 +137,21 @@ int main(int argc, char **argv) {
     
     pkt_status_code st;
 
-    while( (pkt = read_file(buffer,fd)) != NULL){
-        //pkt_print(pkt);
-        buffer_enqueue(buffer,pkt);
-        st = pkt_encode(pkt,buf,&len);
-        send(sock,buf,len,0);
+    int cpt = 0;
+    while(!eof){
+        pkt = read_file(buffer,fd);
+        if(pkt){
+            buffer_enqueue(buffer,pkt);
+            st = pkt_encode(pkt,buf,&len);
+            if(st){
+               ERROR("Error while encoding packet : %d",st); 
+            }else{
+                send(sock,buf,len,0);
+                cpt++;
+            }
+        }
     }
+    printf("%d packet sended\n",cpt);
 
     return EXIT_SUCCESS;
 }

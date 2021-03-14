@@ -11,16 +11,16 @@ int buffer_enqueue(buffer_t *buffer, pkt_t *pkt) {
         return -1;
     }
     newNode->pkt = pkt;
-    newNode->seqnum = pkt_get_seqnum(pkt);
+    //newNode->pkt->seqnum = pkt_get_seqnum(pkt);
     if(buffer->size == 0) {
         newNode->next = newNode;
         newNode->prev = newNode;
         buffer->first = newNode;
         buffer->last = newNode;
     } else {
-        node_t *current = buffer->last;
+        node_t* current = buffer->last;
         uint8_t pkt_seqnum = pkt_get_seqnum(pkt);
-        while(pkt_seqnum < current->seqnum && !(current->seqnum > 200 && pkt_seqnum < 100)) { // condition for separating two blocks of 256
+        while(pkt_seqnum < pkt_get_seqnum(current->pkt) && !(pkt_get_seqnum(current->pkt) > 200 && pkt_seqnum < 100)) { // condition for separating two blocks of 256
             current = current->prev;
             if(current == buffer->first) {
                 break;
@@ -48,7 +48,7 @@ pkt_t *buffer_remove(buffer_t *buffer, uint8_t seqnum) {
         return NULL;
     }
 
-    while(current->seqnum != seqnum) {
+    while(pkt_get_seqnum(current->pkt) != seqnum) {
         current = current->next;
         if(current == buffer->first) {
             fprintf(stderr, "Node to remove (%i) not in buffer.\n", seqnum);
@@ -101,8 +101,8 @@ int buffer_remove_acked(buffer_t *buffer, uint8_t seqnum) {
 
     int count = 0;
 
-    while(seqnum != buffer->first->seqnum) {
-        pkt_del(buffer_remove(buffer, buffer->first->seqnum));
+    while(seqnum != pkt_get_seqnum(buffer->first->pkt)) {
+        pkt_del(buffer_remove(buffer, pkt_get_seqnum(buffer->first->pkt)));
         count++;
         if(buffer->size == 0) {
             break;
@@ -118,7 +118,7 @@ pkt_t *buffer_get_pkt(buffer_t *buffer, uint8_t seqnum) {
     }
 
     node_t *current = buffer->first;
-    while(current->seqnum != seqnum) {
+    while(pkt_get_seqnum(current->pkt) != seqnum) {
         current = current->next;
         if(current == buffer->first) {
             return NULL;
@@ -133,7 +133,7 @@ size_t buffer_size(buffer_t *buffer) {
 
 void buffer_free(buffer_t *buffer) {
     while(buffer->first != NULL) {
-        pkt_del(buffer_remove(buffer, buffer->first->seqnum));
+        pkt_del(buffer_remove(buffer, pkt_get_seqnum(buffer->first->pkt)));
     }
     if(buffer_size(buffer) != 0) {
         fprintf(stderr, "Exiting buffer_free() with buffer_size != 0\n");
@@ -157,7 +157,7 @@ int is_in_buffer(buffer_t *buffer, uint8_t seqnum) {
 
     node_t *current = buffer->first;
     for (int i = 0; i < (int)buffer_size(buffer); i++) {
-        if (current->seqnum == seqnum) {
+        if (pkt_get_seqnum(current->pkt) == seqnum) {
             return 1;
         }
         current = current->next;
@@ -176,7 +176,7 @@ void buffer_print(buffer_t *buffer, int amount) {
     node_t *current = buffer->first;
     fprintf(stderr, "buffer CONTENT : ");
     for (int i=1; i <= (int)buffer_size(buffer) && i <= amount2; i++) {
-        fprintf(stderr, "%i -> ", current->seqnum);
+        fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));
         current = current->next;
     }
     if (amount != 0) {

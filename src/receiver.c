@@ -59,20 +59,7 @@ int main(int argc, char **argv) {
     ERROR("Receiver has following arguments: stats_filename is %s, listen_ip is %s, listen_port is %u",
         stats_filename, listen_ip, listen_port);
 
-    DEBUG("You can only see me if %s", "you built me using `make debug`");
-    ERROR("This is not an error, %s", "now let's code!");
-
-    // Now let's code!
-    // int sock = socket(AF_INET6, SOCK_DGRAM, 0);
-
-    // // REGISTER 
     struct sockaddr_in6 listener_addr;
-    // memset(&listener_addr, 0, sizeof(struct sockaddr_in6));
-    // listener_addr.sin6_family = AF_INET6;
-    // listener_addr.sin6_port = htons(listen_port);
-    // inet_pton(AF_INET6, listen_ip, &listener_addr.sin6_addr);    
-
-    // bind(sock, (const struct sockaddr *) &listener_addr, sizeof(listener_addr));
 
     const char* err = real_address(listen_ip,&listener_addr);
     if(err){
@@ -86,13 +73,15 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    int cpt = 0;
+    pkt_t* pkt = pkt_new();
+    ssize_t received;
     char msg[MAX_PKT_SIZE];
     while(1){
-        ssize_t received = recv(sock, msg, MAX_PKT_SIZE, 0);
-        pkt_t* pkt = pkt_new();
+        received = recv(sock, msg, MAX_PKT_SIZE, 0);
         pkt_decode(msg,received,pkt);
-        pkt_print(pkt);    
-        printf("%ld\n", received);
+        printf("%s\n %ld\n",pkt_get_payload(pkt), received);
+        cpt++;
     }
     return EXIT_SUCCESS;
 }
