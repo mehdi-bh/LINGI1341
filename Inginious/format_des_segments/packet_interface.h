@@ -13,6 +13,8 @@
 #include <arpa/inet.h>
 
 /* Raccourci pour struct pkt */
+
+
 typedef struct pkt pkt_t;
 
 /* Types de paquets */

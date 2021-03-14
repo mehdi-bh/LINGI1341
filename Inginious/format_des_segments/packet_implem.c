@@ -389,8 +389,8 @@ int main(int argc, char* argv[]){
     pkt_t* pkt = pkt_new();
     char* a = "SalutSalutArbitre";
 
-    //pkt_set_payload(pkt, a, 18);
-    pkt->type = PTYPE_ACK;
+    pkt_set_payload(pkt, a, 18);
+    pkt->type = PTYPE_DATA;
     pkt->tr = 0;
     pkt->window = 10;
     pkt->seqnum = 123;

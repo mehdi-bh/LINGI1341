@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "packet_implem.h"
 
 #include "log.h"
 
@@ -70,9 +71,13 @@ int main(int argc, char **argv) {
     inet_pton(AF_INET6, listen_ip, &listener_addr.sin6_addr);
 
     bind(sock, (const struct sockaddr *) &listener_addr, sizeof(listener_addr));
-    char msg[32];
-    recv(sock, msg, 32, 0);
-    printf("%s\n", msg);
+    char msg[MAX_PKT_SIZE];
+    ssize_t received = recv(sock, msg, MAX_PKT_SIZE, 0);
+    pkt_t* pkt = pkt_new();
+    pkt_decode(msg,received,pkt);
+    print_data(pkt);
+    printf("%s\n",msg);
+    printf("%ld\n", received);
 
     return EXIT_SUCCESS;
 }

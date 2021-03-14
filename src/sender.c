@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "packet_implem.h"
 
 #include "log.h"
 
@@ -76,7 +77,21 @@ int main(int argc, char **argv) {
 
     connect(sock, (const struct sockaddr *) &receiver_addr, sizeof(receiver_addr));
     char msg[32] = "hello, world!";
-    send(sock, msg, 32, 0);
+    pkt_t* pkt = pkt_new();
+    pkt_set_type(pkt,PTYPE_DATA);
+    pkt_set_payload(pkt,msg,sizeof(msg));
+    pkt_set_tr(pkt,0);
+    pkt_set_seqnum(pkt,0);
+    pkt_set_window(pkt,31);
+    pkt_set_timestamp(pkt,10);
+
+    char buf[MAX_PKT_SIZE];
+    ssize_t len;
+    pkt_status_code st = pkt_encode(pkt,buf,&len);
+    printf("Error fdp : %i\n",st);
+    print_data(pkt);
+
+    send(sock, buf,len, 0);
     
     return EXIT_SUCCESS;
 }

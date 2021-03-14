@@ -4,6 +4,13 @@
 #include <stddef.h> /* size_t */
 #include <stdint.h> /* uintx_t */
 #include <stdio.h>  /* ssize_t */
+#include <stdlib.h>
+#include <string.h>
+#include <zlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /* Raccourci pour struct pkt */
 typedef struct pkt pkt_t;
@@ -19,6 +26,8 @@ typedef enum {
 #define MAX_PAYLOAD_SIZE 512
 /* Taille maximale de Window */
 #define MAX_WINDOW_SIZE 31
+
+#define MAX_PKT_SIZE 512 + 16
 
 /* Valeur de retours des fonctions */
 typedef enum {
@@ -130,5 +139,6 @@ pkt_status_code pkt_set_crc2(pkt_t*, const uint32_t crc2);
  */
 ssize_t predict_header_length(const pkt_t *pkt);
 
+void print_data(pkt_t* pkt);
 
 #endif  /* __PACKET_INTERFACE_H_ */
