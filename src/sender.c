@@ -1,17 +1,21 @@
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <poll.h>
 #include "packet/packet.h"
 #include "logs/log.h"
 #include "socket/socket_manager.h"
 #include "buffer/buffer.h"
 
 #define BUFF_LEN 
-#define WINDOW 31
+#define ACK_SIZE 10
 
+int window = 31;
+//receiver window
+int window_r = 31;
 int fd = STDIN_FILENO;
 int seqnum = 0;
 int eof = 0;
+int lastack = -1;
 
 
 int print_usage(char *prog_name) {
@@ -32,11 +36,6 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     char paylaod[MAX_PAYLOAD_SIZE];
     ssize_t readed = read(fd,paylaod,MAX_PAYLOAD_SIZE);
 
-    if(readed == 0){
-        eof = 1;
-        return NULL;
-    }
-
     if(readed == -1){
         ERROR("Can't read data in file");
         return NULL;
@@ -48,10 +47,15 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     }
     pkt_status_code err = pkt_set_type(pkt,PTYPE_DATA);
     err = pkt_set_tr(pkt,0);
-    err = pkt_set_window(pkt,0);
-    err = pkt_set_seqnum(pkt,(seqnum++ % 256));
-    err = pkt_set_payload(pkt,paylaod,readed);
-
+    err = pkt_set_window(pkt,window);
+    if(readed == 0){
+        err = pkt_set_seqnum(pkt,seqnum);
+        err = pkt_set_length(pkt,0);
+    }else{
+        err = pkt_set_seqnum(pkt,(seqnum++ % 256));
+        err = pkt_set_payload(pkt,paylaod,readed);
+    }
+    
     if(err){
         ERROR("Can't set data to the packet : %d",err);
         pkt_del(pkt);
@@ -60,6 +64,108 @@ pkt_t* read_file(buffer_t* buffer, int fd){
 
     return pkt;
 }
+
+void read_write_loop_sender(const int sfd, const int fdIn){
+
+    int nfds = 2;
+    struct pollfd *pfds;
+    pfds = malloc(sizeof(struct pollfd)*nfds);
+    int cpt = 0;
+    int last_ack_to_receive = -1;
+
+    int error;
+    pkt_t* pkt;
+    char buf[MAX_PKT_SIZE];
+    char buf_ack[ACK_SIZE];
+    ssize_t len;
+
+    buffer_t* buffer = buffer_init();
+
+    pkt_status_code st;        
+    while(!eof){
+
+        pfds[0].fd = fdIn;
+        pfds[0].events = POLLIN;
+        pfds[1].fd = sfd;
+        pfds[1].events = POLLIN;
+
+        int ready;
+        
+        ready = poll(pfds,nfds,-1);
+        if(ready == -1){
+            ERROR("Poll error");
+            return;
+        }
+
+        
+        if(pfds[0].revents != 0 && pfds[0].revents & POLLIN && last_ack_to_receive == -1){
+
+            pkt = read_file(buffer,fdIn);
+            if(pkt){
+                if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
+                    last_ack_to_receive = seqnum;
+                    printf("last_ack_to_receive = %d\n",seqnum);
+                }
+                buffer_enqueue(buffer,pkt);
+                printf("add : ");fflush(stdout);buffer_print(buffer,buffer->size);
+                st = pkt_encode(pkt,buf,&len);
+                
+                if(st){
+                    pkt_del(pkt);
+                    ERROR("Error while encoding packet : %d",st);
+                    continue;
+                }
+                
+                printf("send the %d packet\n",seqnum);
+                error = send(sfd,buf,len,0);
+                if(error == -1){
+                    ERROR("ERROR while sending packet : %d",seqnum);
+                }
+            
+            }
+        }
+        if(pfds[1].revents != 0 && pfds[1].revents & POLLIN){
+            len = read(sfd,buf_ack,ACK_SIZE);
+            if(len == -1){
+                ERROR("Error while reading ack");
+                continue;
+            }
+            
+            pkt = pkt_new();
+            if(!pkt){
+                ERROR("read_write_loop_sender : Out of memory for create a packet ");
+                pkt_del(pkt);
+                continue;
+            }
+
+            error = pkt_decode(buf_ack,len,pkt);
+            if(error || pkt_get_type(pkt) == PTYPE_DATA){
+                ERROR("read_write_loop_sender : Error while decoding ack packet");
+                pkt_del(pkt);
+                continue;
+            }
+            window_r = pkt_get_window(pkt);
+            int ack_received = pkt_get_seqnum(pkt);
+
+            error = buffer_remove_acked(buffer,ack_received);
+            printf("ack %d received, %d pkt removed\n",ack_received,error);
+           
+            printf("remove : ");fflush(stdout);
+            buffer_print(buffer,buffer->size);
+        
+            if(error > 0){
+                lastack = ack_received;
+                if(lastack == last_ack_to_receive){
+                    ERROR("Reached the EOF");
+                    pkt_del(pkt);
+                    eof = 1;
+                }
+            }
+
+        }
+    }
+}
+
 
 // gcc sender.c packet/packet.c logs/log.c socket/socket_manager.c buffer/buffer.c -o sender -lz
 // gcc sender.c -o sender
@@ -137,21 +243,23 @@ int main(int argc, char **argv) {
     
     pkt_status_code st;
 
-    int cpt = 0;
-    while(!eof){
-        pkt = read_file(buffer,fd);
-        if(pkt){
-            buffer_enqueue(buffer,pkt);
-            st = pkt_encode(pkt,buf,&len);
-            if(st){
-               ERROR("Error while encoding packet : %d",st); 
-            }else{
-                send(sock,buf,len,0);
-                cpt++;
-            }
-        }
-    }
-    printf("%d packet sended\n",cpt);
+    // int cpt = 0;
+    // while(!eof){
+    //     pkt = read_file(buffer,fd);
+    //     if(pkt){
+    //         buffer_enqueue(buffer,pkt);
+    //         st = pkt_encode(pkt,buf,&len);
+    //         if(st){
+    //            ERROR("Error while encoding packet : %d",st); 
+    //         }else{
+    //             send(sock,buf,len,0);
+    //             cpt++;
+    //         }
+    //     }
+    // }
+    // printf("%d packet sended\n",cpt);
+
+    read_write_loop_sender(sock,fd);
 
     return EXIT_SUCCESS;
 }
