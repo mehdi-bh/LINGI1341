@@ -167,24 +167,30 @@ int is_in_buffer(buffer_t *buffer, uint8_t seqnum) {
 }
 
 void buffer_print(buffer_t *buffer, int amount) {
-    int amount2;
-    if (amount == 0) {
-        amount2 = buffer_size(buffer);
-    } else {
-        amount2 = amount;
-    }
-    node_t *current = buffer->first;
-    fprintf(stderr, "buffer CONTENT : ");
-    for (int i=1; i <= (int)buffer_size(buffer) && i <= amount2; i++) {
+    // int amount2;
+    // if (amount == 0) {
+    //     amount2 = buffer_size(buffer);
+    // } else {
+    //     amount2 = amount;
+    // }
+    // node_t *current = buffer->first;
+    // fprintf(stderr, "buffer CONTENT : ");
+    // for (int i=1; i <= (int)buffer_size(buffer) && i <= amount2; i++) {
+    //     fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));
+    //     current = current->next;
+    // }
+    // if (amount != 0) {
+    //     fprintf(stderr, "...\n");
+
+    // } else {
+    //     fprintf(stderr, "END\n");
+    // }
+    node_t* current = buffer->first;
+    for(int i = 0 ; i < buffer->size ; i++){
         fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));
         current = current->next;
     }
-    if (amount != 0) {
-        fprintf(stderr, "...\n");
-
-    } else {
-        fprintf(stderr, "END\n");
-    }
+    fprintf(stderr,"END \n");
 }
 
 // int main(int argc, char* argv[]){

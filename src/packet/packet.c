@@ -208,8 +208,6 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t *len)
         } else {
             return E_UNCONSISTENT;
         }
-    } else {
-        return E_UNCONSISTENT;
     }
 
     *len = cur;
