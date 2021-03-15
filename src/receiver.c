@@ -61,6 +61,7 @@ int main(int argc, char **argv) {
 
     struct sockaddr_in6 listener_addr;
 
+
     const char* err = real_address(listen_ip,&listener_addr);
     if(err){
         ERROR("Could not resolve hostname %s : %d",listen_ip,listen_port);
@@ -77,11 +78,13 @@ int main(int argc, char **argv) {
     pkt_t* pkt = pkt_new();
     ssize_t received;
     char msg[MAX_PKT_SIZE];
-    while(1){
-        received = recv(sock, msg, MAX_PKT_SIZE, 0);
-        pkt_decode(msg,received,pkt);
-        printf("%s\n %ld\n",pkt_get_payload(pkt), received);
-        cpt++;
-    }
+    // while(1){
+    //     received = recv(sock, msg, MAX_PKT_SIZE, 0);
+    //     pkt_decode(msg,received,pkt);
+    //     printf("%s\n %ld\n",pkt_get_payload(pkt), received);
+    //     cpt++;
+    // }
+    read_write_loop_receiver(sock,STDOUT_FILENO);
+
     return EXIT_SUCCESS;
 }
