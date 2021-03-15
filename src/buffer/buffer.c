@@ -193,19 +193,24 @@ void buffer_print(buffer_t *buffer, int amount) {
     fprintf(stderr,"END \n");
 }
 
-// int main(int argc, char* argv[]){
-//     pkt_t* pkt = pkt_new();
-//     char* a = "SalutSalutArbitre";
+int main(int argc, char* argv[]){
+    buffer_t* buffer = buffer_init();
+    for(int i = 0; i < 257; i++){
+        pkt_t* pkt = pkt_new();
+        char* a = "SalutSalutArbitre";
 
-//     pkt_set_payload(pkt, a, 17);
-//     pkt_set_type(pkt,PTYPE_DATA);
-//     pkt_set_tr(pkt,0);
-//     pkt_set_window(pkt,10);
-//     pkt_set_seqnum(pkt,123);
-//     pkt_set_timestamp(pkt,11);
-//     size_t length = (4*sizeof(uint32_t) + pkt_get_length(pkt));
-//     char* buffer = (char*)malloc(sizeof(char)*100);
+        pkt_set_payload(pkt, a, 17);
+        pkt_set_type(pkt,PTYPE_DATA);
+        pkt_set_tr(pkt,0);
+        pkt_set_window(pkt,10);
+        pkt_set_seqnum(pkt,i);
+        pkt_set_timestamp(pkt,11);
+        size_t length = (4*sizeof(uint32_t) + pkt_get_length(pkt));
+        char* buf = (char*)malloc(sizeof(char)*100);
 
-//     pkt_encode(pkt, buffer, &length);
-//     // print_data(pkt);
-// }
+        pkt_encode(pkt, buf, &length);
+        buffer_enqueue(buffer,pkt);
+    }
+
+    buffer_print(buffer,0);
+}
