@@ -299,7 +299,6 @@ pkt_status_code pkt_set_window(pkt_t *pkt, const uint8_t window)
 
 pkt_status_code pkt_set_seqnum(pkt_t *pkt, const uint8_t seqnum)
 {
-    
     pkt->seqnum = seqnum;
     return PKT_OK;
 }
@@ -307,7 +306,6 @@ pkt_status_code pkt_set_seqnum(pkt_t *pkt, const uint8_t seqnum)
 pkt_status_code pkt_set_length(pkt_t *pkt, const uint16_t length)
 {
     if(length > MAX_PAYLOAD_SIZE){
-        fprintf(stderr,"length of %d\n",length);
         return E_LENGTH;
     }
     else{
@@ -334,9 +332,7 @@ pkt_status_code pkt_set_crc2(pkt_t *pkt, const uint32_t crc2)
     return PKT_OK;
 }
 
-pkt_status_code pkt_set_payload(pkt_t *pkt,
-                                const char *data,
-                                const uint16_t length)
+pkt_status_code pkt_set_payload(pkt_t *pkt, const char *data, const uint16_t length)
 {
     if(length > MAX_PAYLOAD_SIZE) 
         return E_LENGTH;
@@ -372,47 +368,3 @@ void pkt_print(pkt_t* pkt){
 	printf("type: %d\ntruncated: %d\nwindow: %d\nlength: %d\nseqnum %d\ntimestamp: %d\ncrc1: %d\npayload: %s\n",
 		pkt->type, pkt->tr, pkt->window, pkt->length,pkt->seqnum,pkt->timestamp, pkt->crc1, pkt->payload);
 }
-
-// int main(int argc, char* argv[]){
-//     pkt_t* pkt = pkt_new();
-//     char* a = "SalutSalutArbitre";
-
-//     pkt_set_payload(pkt, a, 18);
-//     pkt->type = PTYPE_DATA;
-//     pkt->tr = 0;
-//     pkt->window = 10;
-//     pkt->seqnum = 123;
-//     //pkt->length = sizeof(a);
-//     pkt->timestamp = 11;
-    
-//     /*
-//     uLong crc = crc32(0L, Z_NULL, 0);
-//     uLong crc2 = crc32(crc, (Bytef*) pkt_get_payload(pkt), pkt_get_length(pkt));
-//     pkt->crc2 = crc2;
-//     */
-
-//     // copie du packet avec tr=0 dans un char*
-//     // copie de char* buf à pkt_t temp pour mettre tr à 0
-//     //calcul du crc1 du packet en network
-//     /*
-//     pkt->length = htons(pkt->length);
-//     uLong crc1 = crc32(0,(Bytef*) pkt, sizeof(uint64_t));
-//     pkt->crc1 = crc1;
-//     pkt->length = ntohs(pkt->length);
-//     */
-//     char* buffer = (char*)malloc(sizeof(char)*100);
-
-//     size_t length = (4*sizeof(uint32_t) + pkt->length);
-
-//     pkt_encode(pkt, buffer, &length);
-//     print_data(pkt);
-//     printf("\n");
-
-//     pkt_del(pkt);
-
-//     pkt_t* p = pkt_new();
-//     pkt_decode(buffer, sizeof(char)*100, p);
-//     print_data(p);
-
-//     free(buffer);
-// }
