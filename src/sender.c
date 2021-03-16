@@ -16,6 +16,7 @@ int fd = STDIN_FILENO;
 int seqnum = 0;
 int eof = 0;
 int lastack = -1;
+uint8_t nextSeqnum;
 
 
 int print_usage(char *prog_name) {
@@ -64,6 +65,48 @@ pkt_t* read_file(buffer_t* buffer, int fd){
 
     return pkt;
 }
+
+int read_file_to_buffer(buffer_t* buffer, int fd){
+    if(!buffer){
+        ERROR("Buffer is null");
+        return 0;
+    }
+
+    int nbPackets = 0;
+    ssize_t datas;
+
+    while(datas > 0){
+        char payload[MAX_PAYLOAD_SIZE];
+        datas = read(fd,payload,MAX_PAYLOAD_SIZE);
+        if(datas == -1){
+            ERROR("Can't read data in file");
+            return 0;
+        }
+
+        pkt_t* pkt = pkt_new();
+        if(!pkt){
+            ERROR("Can't create packet");
+            return 0;
+        }
+
+        pkt_status_code err;
+        err = pkt_set_type(pkt,PTYPE_DATA);
+        err = pkt_set_tr(pkt,0);
+        err = pkt_set_window(pkt,window);
+        err = pkt_set_seqnum(pkt,(seqnum++ % 256));
+        err = pkt_set_payload(pkt,payload,datas);
+        if(err){
+            ERROR("Can't set data to the packet : %d",err);
+            pkt_del(pkt);
+            return 0;
+        }
+
+        buffer_enqueue(buffer,pkt);
+        nbPackets++;
+    }
+    return nbPackets;
+}
+
 
 void read_write_loop_sender(const int sfd, const int fdIn){
 
@@ -252,6 +295,9 @@ int main(int argc, char **argv) {
     // printf("%d packet sended\n",cpt);
 
     read_write_loop_sender(sock,fd);
-
+    /*buffer_t* buffer = buffer_init();
+    int nb = read_file_to_buffer(buffer,fd);
+    printf("%d",nb);
+    buffer_print(buffer,0);*/
     return EXIT_SUCCESS;
 }
