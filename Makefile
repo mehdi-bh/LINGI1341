@@ -1,17 +1,17 @@
 # You can use clang if you prefer
-CC = gcc
+CC = gcc 
 
 # Feel free to add other C flags
-CFLAGS += -c -std=gnu99 -Wall -Werror -Wextra -O2
+CFLAGS += -c -std=gnu99 -Wall -Werror -Wextra -O2 
 # By default, we colorize the output, but this might be ugly in log files, so feel free to remove the following line.
-CFLAGS += -D_COLOR
+CFLAGS += -D_COLOR 
 
 # You may want to add something here
-LDFLAGS +=
+LDFLAGS += -lz
 
 # Adapt these as you want to fit with your project
-SENDER_SOURCES = $(wildcard src/sender.c src/log.c)
-RECEIVER_SOURCES = $(wildcard src/receiver.c src/log.c)
+SENDER_SOURCES = $(wildcard src/sender.c src/logs/log.c src/buffer/buffer.c src/packet/packet.c src/socket/socket_manager.c )
+RECEIVER_SOURCES = $(wildcard src/receiver.c src/logs/log.c src/buffer/buffer.c src/packet/packet.c src/socket/socket_manager.c) 
 
 SENDER_OBJECTS = $(SENDER_SOURCES:.c=.o)
 RECEIVER_OBJECTS = $(RECEIVER_SOURCES:.c=.o)

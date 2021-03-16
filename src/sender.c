@@ -70,15 +70,14 @@ void read_write_loop_sender(const int sfd, const int fdIn){
     int nfds = 2;
     struct pollfd *pfds;
     pfds = malloc(sizeof(struct pollfd)*nfds);
-    int cpt = 0;
     int last_ack_to_receive = -1;
 
     int error;
     pkt_t* pkt;
     char buf[MAX_PKT_SIZE];
     char buf_ack[ACK_SIZE];
-    ssize_t len;
-
+    size_t len;
+    ssize_t readed;
     buffer_t* buffer = buffer_init();
 
     pkt_status_code st;        
@@ -104,10 +103,10 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             if(pkt){
                 if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
                     last_ack_to_receive = seqnum;
-                    printf("last_ack_to_receive = %d\n",seqnum);
+                    //printf("last_ack_to_receive = %d\n",seqnum);
                 }
                 buffer_enqueue(buffer,pkt);
-                printf("add : ");fflush(stdout);buffer_print(buffer,buffer->size);
+                //printf("add : ");fflush(stdout);buffer_print(buffer,buffer->size);
                 st = pkt_encode(pkt,buf,&len);
                 
                 if(st){
@@ -116,7 +115,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                     continue;
                 }
                 
-                printf("send the %d packet\n",seqnum);
+                ERROR("send the %d packet\n",seqnum);
                 error = send(sfd,buf,len,0);
                 if(error == -1){
                     ERROR("ERROR while sending packet : %d",seqnum);
@@ -125,8 +124,8 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             }
         }
         if(pfds[1].revents != 0 && pfds[1].revents & POLLIN){
-            len = read(sfd,buf_ack,ACK_SIZE);
-            if(len == -1){
+            readed = read(sfd,buf_ack,ACK_SIZE);
+            if(readed == -1){
                 ERROR("Error while reading ack");
                 continue;
             }
@@ -138,7 +137,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 continue;
             }
 
-            error = pkt_decode(buf_ack,len,pkt);
+            error = pkt_decode(buf_ack,readed,pkt);
             if(error || pkt_get_type(pkt) == PTYPE_DATA){
                 ERROR("read_write_loop_sender : Error while decoding ack packet");
                 pkt_del(pkt);
@@ -148,9 +147,9 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             int ack_received = pkt_get_seqnum(pkt);
 
             error = buffer_remove_acked(buffer,ack_received);
-            printf("ack %d received, %d pkt removed\n",ack_received,error);
+            ERROR("ack %d received, %d pkt removed\n",ack_received,error);
            
-            printf("remove : ");fflush(stdout);
+            //printf("remove : ");fflush(stdout);
             buffer_print(buffer,buffer->size);
         
             if(error > 0){
@@ -235,13 +234,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    pkt_t* pkt;
-    char buf[MAX_PKT_SIZE];
-    ssize_t len;
-
-    buffer_t* buffer = buffer_init();
-    
-    pkt_status_code st;
 
     // int cpt = 0;
     // while(!eof){

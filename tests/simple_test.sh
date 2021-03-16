@@ -4,7 +4,7 @@
 rm -f received_file input_file
 
 # Fichier au contenu aléatoire de 512 octets
-dd if=/dev/urandom of=input_file bs=1 count=512 &> /dev/null
+dd if=/dev/urandom of=input_file bs=1 count=51200 &> /dev/null
 
 valgrind_sender=""
 valgrind_receiver=""
@@ -14,7 +14,7 @@ if [ ! -z "$VALGRIND" ] ; then
 fi
 
 # On lance le receiver et capture sa sortie standard
-$valgrind ./receiver -f received_file :: 2456  2> receiver.log &
+$valgrind ./receiver -f received_file :: 1341  2> receiver.log &
 receiver_pid=$!
 
 cleanup()

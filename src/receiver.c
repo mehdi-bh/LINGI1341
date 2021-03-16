@@ -25,6 +25,8 @@ int print_usage(char *prog_name) {
 
 int window = 31;
 int next_seqnum = 0;
+int last_writed = -1;
+int fd = STDOUT_FILENO;
 
 
 int is_in_window(int seqnum){
@@ -34,19 +36,22 @@ int is_in_window(int seqnum){
     return 0;
 }
 
-// int write_buffer_to_file(buffer_t* buffer,const int sfd, const int fdOut){
-//     node_t* current = buffer->first;
-//     pkt_t* pkt = current->pkt;
-//     while(current != NULL){
-//         ssize_t writed = write(sfd,pkt_get_payload(pkt),pkt_get_length(pkt));
-//         if(writed == -1){
-//             ERROR("Receiver can't write to file");
-//             return -1;
-//         }
-
-        
-//     }
-// }
+int write_buffer_to_file(buffer_t* buffer, const int fdOut){
+    node_t* current = buffer->first;
+    pkt_t* pkt = current->pkt;
+    while(current != NULL && pkt_get_seqnum(pkt) == last_writed+1){
+        ssize_t writed = write(fdOut,pkt_get_payload(pkt),pkt_get_length(pkt));
+        if(writed == -1){
+            ERROR("Receiver can't write to file");
+            return -1;
+        }
+        ERROR("packet %d writed\n",pkt_get_seqnum(pkt));
+        last_writed++;
+        current = current->next;
+        pkt = buffer_remove(buffer,pkt_get_seqnum(pkt));
+    }
+    return 1;
+}
 
 int send_ack(const int sfd,int seqnum){
     pkt_t* ack = pkt_new();
@@ -76,7 +81,7 @@ int send_ack(const int sfd,int seqnum){
         return -1;
     }
 
-    printf("\n\nack %d sended\n\n",next_seqnum);
+    ERROR("\n\nack %d sended\n\n",next_seqnum);
 
     return 0;
 }
@@ -131,12 +136,12 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                     ERROR("EOF for sender");
                     lastack_to_send = pkt_get_seqnum(pkt);
                 }else{
-                    //error = write_buffer_to_file(buffer,sfd,fdOut);
-                    error = write(fdOut,buf,s);
-                    if(error == -1){
-                        ERROR("Error while writing");
-                        //return;
-                    }
+                    error = write_buffer_to_file(buffer,fdOut);
+                    // error = write(fdOut,buf,s);
+                    // if(error == -1){
+                    //     ERROR("Error while writing");
+                    //     //return;
+                    // }
                 }
                 next_seqnum = pkt_get_seqnum(pkt) + 1;
                 window++;
@@ -158,13 +163,17 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
 int main(int argc, char **argv) {
     int opt;
 
+    char *filename = NULL;
     char *stats_filename = NULL;
     char *listen_ip = NULL;
     char *listen_port_err;
     uint16_t listen_port;
 
-    while ((opt = getopt(argc, argv, "s:h")) != -1) {
+    while ((opt = getopt(argc, argv, "f:s:h")) != -1) {
         switch (opt) {
+        case 'f':
+            filename = optarg;
+            break;
         case 'h':
             return print_usage(argv[0]);
         case 's':
@@ -196,6 +205,12 @@ int main(int argc, char **argv) {
 
     struct sockaddr_in6 listener_addr;
 
+    if(filename){
+        fd = open(filename,O_WRONLY | O_RDONLY | O_CREAT,0644);
+        if(fd < 0){
+            ERROR("Can't open file %s",filename);
+        }
+    }
 
     const char* err = real_address(listen_ip,&listener_addr);
     if(err){
@@ -216,7 +231,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    read_write_loop_receiver(sock,STDOUT_FILENO);
+    read_write_loop_receiver(sock,fd);
 
     return EXIT_SUCCESS;
 }
