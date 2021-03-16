@@ -155,7 +155,6 @@ void test_pkt_encode_decode(){
 
     /*** Encode ***/
 	size_t len = 50;
-	size_t error = 10;
 	char buffer[len];
     // Errors
     pkt_set_tr(pkt, 1);
@@ -191,6 +190,7 @@ void test_pkt_encode_decode(){
 }
 
 int main(){
+	printf("-----------------------------------------------------------\n");
 	if (CUE_SUCCESS != CU_initialize_registry()){
         return CU_get_error();
     }
@@ -216,5 +216,6 @@ int main(){
 	CU_basic_show_failures(CU_get_failure_list());
 
 	CU_cleanup_registry();
+	printf("-----------------------------------------------------------\n");
 	return CU_get_error();
 }

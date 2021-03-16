@@ -164,6 +164,7 @@ void test_buffer_contains(void){
 }
 
 int main(){
+    printf("-----------------------------------------------------------\n");
     if (CUE_SUCCESS != CU_initialize_registry()){
         return CU_get_error();
     }
@@ -195,5 +196,6 @@ int main(){
     CU_basic_show_failures(CU_get_failure_list());
 
     CU_cleanup_registry();
+    printf("-----------------------------------------------------------\n");
     return CU_get_error();
 }

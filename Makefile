@@ -30,22 +30,28 @@ $(RECEIVER): $(RECEIVER_OBJECTS)
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
-.PHONY: clean mrproper
-
+# Clean
 clean:
+	@cd tests && $(MAKE) -s clean
 	rm -f $(SENDER_OBJECTS) $(RECEIVER_OBJECTS)
-
-mrproper:
 	rm -f $(SENDER) $(RECEIVER)
+	rm -f "received_file" "sender.log" "receiver.log" "input_file"
 
-# It is likely that you will need to update this
-tests: all
+# Tests
+create_tests:
+	@cd tests && $(MAKE) -s
+	@cd tests && $(MAKE) -s run
+
+tests_sh:
 	./tests/run_tests.sh
 
-# By default, logs are disabled. But you can enable them with the debug target.
+tests: all create_tests tests_sh
+
+# Debug
 debug: CFLAGS += -D_DEBUG
 debug: clean all
 
+### SUBMISSION ###
 # Place the zip in the parent repository of the project
 ZIP_NAME="../projet1_benhaddou_hennebo.zip"
 
