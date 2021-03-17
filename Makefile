@@ -1,10 +1,10 @@
 # You can use clang if you prefer
-CC = gcc 
+CC = gcc
 
 # Feel free to add other C flags
-CFLAGS += -c -std=gnu99 -Wall -Werror -Wextra -O2 
+CFLAGS += -c -std=gnu99 -Wall -Werror -Wextra -O2
 # By default, we colorize the output, but this might be ugly in log files, so feel free to remove the following line.
-CFLAGS += -D_COLOR 
+CFLAGS += -D_COLOR
 
 # You may want to add something here
 LDFLAGS += -lz
@@ -12,7 +12,6 @@ LDFLAGS += -lz
 # Adapt these as you want to fit with your project
 SENDER_SOURCES = $(wildcard src/sender.c src/logs/log.c src/buffer/buffer.c src/packet/packet.c src/socket/socket_manager.c )
 RECEIVER_SOURCES = $(wildcard src/receiver.c src/logs/log.c src/buffer/buffer.c src/packet/packet.c src/socket/socket_manager.c) 
-
 SENDER_OBJECTS = $(SENDER_SOURCES:.c=.o)
 RECEIVER_OBJECTS = $(RECEIVER_SOURCES:.c=.o)
 
@@ -30,28 +29,22 @@ $(RECEIVER): $(RECEIVER_OBJECTS)
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
-# Clean
+.PHONY: clean mrproper
+
 clean:
-	@cd tests && $(MAKE) -s clean
 	rm -f $(SENDER_OBJECTS) $(RECEIVER_OBJECTS)
+
+mrproper:
 	rm -f $(SENDER) $(RECEIVER)
-	rm -f "received_file" "sender.log" "receiver.log" "input_file"
 
-# Tests
-create_tests:
-	@cd tests && $(MAKE) -s
-	@cd tests && $(MAKE) -s run
-
-tests_sh:
+# It is likely that you will need to update this
+tests: all
 	./tests/run_tests.sh
 
-tests: all create_tests tests_sh
-
-# Debug
+# By default, logs are disabled. But you can enable them with the debug target.
 debug: CFLAGS += -D_DEBUG
 debug: clean all
 
-### SUBMISSION ###
 # Place the zip in the parent repository of the project
 ZIP_NAME="../projet1_benhaddou_hennebo.zip"
 

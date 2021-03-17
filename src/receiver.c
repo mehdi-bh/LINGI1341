@@ -33,10 +33,16 @@ int fd = STDOUT_FILENO;
 
 
 int is_in_window(int seqnum){
-    if(seqnum < (last_acked + window) % MAX_SEQNUM){
-        return 1;
+    if(seqnum < last_writed){
+        if(seqnum - last_writed + MAX_SEQNUM <= window)
+            return 1;
+        return 0;
+    }else{
+        if(seqnum - last_writed <= window)
+            return 1;
+        return 0;
     }
-    return 0;
+    
 }
 
 int get_first_oos_seqnum(buffer_t* buffer){
@@ -173,7 +179,7 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                         continue;
                     }
                 }
-                send_ack(sfd,last_writed+1);
+                send_ack(sfd,(last_writed+1)%MAX_SEQNUM);
                 // if(pkt_get_seqnum(pkt) > last_received)
                 //     last_received = pkt_get_seqnum(pkt);
                 // ERROR("Is in window %d vs %d",last_acked,pkt_get_seqnum(pkt));
