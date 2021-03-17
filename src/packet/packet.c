@@ -264,7 +264,7 @@ const char* pkt_get_payload(const pkt_t* pkt)
 
 
 pkt_status_code pkt_set_type(pkt_t *pkt, const ptypes_t type)
-{
+{   
     if(type < 1 || type > 3){
         return E_TYPE;
     }
