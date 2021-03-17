@@ -9,7 +9,7 @@
 #define BUFF_LEN 
 #define ACK_SIZE 10
 
-int window = 31;
+int window = 1;
 //receiver window
 int window_r = 31;
 int fd = STDIN_FILENO;
@@ -17,22 +17,25 @@ int seqnum = 0;
 int eof = 0;
 int lastack = -1;
 uint8_t nextSeqnum;
-
+struct timeval tv;
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
     return EXIT_FAILURE;
 }
 
+
 pkt_t* read_file(buffer_t* buffer, int fd){
     if(!buffer){
         ERROR("Buffer is null");
         return NULL;
     }
-    // if(buffer->size > WINDOW){
-    //     ERROR("Buffer is full");
-    //     return NULL;
-    // }
+    if(buffer->size >= window){
+        //ERROR("Buffer is full");
+        return NULL;
+    }
+
+    time_t now = time(NULL);
 
     char paylaod[MAX_PAYLOAD_SIZE];
     ssize_t readed = read(fd,paylaod,MAX_PAYLOAD_SIZE);
@@ -49,6 +52,7 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     pkt_status_code err = pkt_set_type(pkt,PTYPE_DATA);
     err = pkt_set_tr(pkt,0);
     err = pkt_set_window(pkt,window);
+    err = pkt_set_timestamp(pkt,(uint32_t)now);
     if(readed == 0){
         err = pkt_set_seqnum(pkt,seqnum);
         err = pkt_set_length(pkt,0);
@@ -72,10 +76,15 @@ int read_file_to_buffer(buffer_t* buffer, int fd){
         return 0;
     }
 
+    if(buffer->size > window){
+        ERROR("Buffer is full");
+        return -1;
+    }
+
     int nbPackets = 0;
     ssize_t datas;
 
-    while(datas > 0){
+    while(buffer->size < window && datas > 0 ){
         char payload[MAX_PAYLOAD_SIZE];
         datas = read(fd,payload,MAX_PAYLOAD_SIZE);
         if(datas == -1){
@@ -92,9 +101,13 @@ int read_file_to_buffer(buffer_t* buffer, int fd){
         pkt_status_code err;
         err = pkt_set_type(pkt,PTYPE_DATA);
         err = pkt_set_tr(pkt,0);
-        err = pkt_set_window(pkt,window);
-        err = pkt_set_seqnum(pkt,(seqnum++ % 256));
-        err = pkt_set_payload(pkt,payload,datas);
+        if(datas == 0){
+            err = pkt_set_seqnum(pkt,seqnum);
+            err = pkt_set_length(pkt,0);
+        }else{
+            err = pkt_set_seqnum(pkt,(seqnum++ % 256));
+            err = pkt_set_payload(pkt,payload,datas);
+        }        
         if(err){
             ERROR("Can't set data to the packet : %d",err);
             pkt_del(pkt);
@@ -117,6 +130,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
 
     int error;
     pkt_t* pkt;
+    pkt_t* pkt_to;
     char buf[MAX_PKT_SIZE];
     char buf_ack[ACK_SIZE];
     size_t len;
@@ -139,32 +153,54 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             return;
         }
 
-        
-        if(pfds[0].revents != 0 && pfds[0].revents & POLLIN && last_ack_to_receive == -1){
 
-            pkt = read_file(buffer,fdIn);
-            if(pkt){
-                if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
-                    last_ack_to_receive = seqnum;
-                    //printf("last_ack_to_receive = %d\n",seqnum);
-                }
-                buffer_enqueue(buffer,pkt);
-                //printf("add : ");fflush(stdout);buffer_print(buffer,buffer->size);
-                st = pkt_encode(pkt,buf,&len);
-                
+        if(pfds[0].revents != 0 && pfds[0].revents & POLLIN ){
+            
+            pkt_to = look_for_timedout_packet(buffer);
+            if(pkt_to){
+                st = pkt_encode(pkt_to,buf,&len);
+                    
                 if(st){
-                    pkt_del(pkt);
+                    pkt_del(pkt_to);
                     ERROR("Error while encoding packet : %d",st);
                     continue;
                 }
                 
-                ERROR("send the %d packet\n",seqnum);
                 error = send(sfd,buf,len,0);
                 if(error == -1){
-                    ERROR("ERROR while sending packet : %d",seqnum);
+                    ERROR("ERROR while sending timed out packet : %d",pkt_get_timestamp(pkt_to));
                 }
-            
+                ERROR("Packet timed out [%d] re sended",pkt_get_seqnum(pkt_to));
             }
+            //else{
+            
+                pkt = read_file(buffer,fdIn);
+                // error = read_file_to_buffer(buffer,fdIn);
+                if(pkt && last_ack_to_receive == -1){
+                    if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
+                        last_ack_to_receive = seqnum;
+                        ERROR("last_ack_to_receive = %d\n",seqnum);
+                    }
+                    buffer_enqueue(buffer,pkt);
+                    ERROR("add : ");fflush(stdout);buffer_print(buffer,buffer->size);
+                    st = pkt_encode(pkt,buf,&len);
+                    
+                    if(st){
+                        pkt_del(pkt);
+                        ERROR("Error while encoding packet : %d",st);
+                        continue;
+                    }
+                    
+                    ERROR("send the %d packet\n",seqnum);
+                    ERROR("don't send packed %d : %d",seqnum,seqnum%5==0);
+                    if(seqnum % 40 != 5) 
+                        error = send(sfd,buf,len,0);
+                    if(error == -1){
+                        ERROR("ERROR while sending packet : %d",seqnum);
+                    }
+                
+                }
+            //}
         }
         if(pfds[1].revents != 0 && pfds[1].revents & POLLIN){
             readed = read(sfd,buf_ack,ACK_SIZE);
@@ -186,13 +222,13 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 pkt_del(pkt);
                 continue;
             }
-            window_r = pkt_get_window(pkt);
+            window = pkt_get_window(pkt);
             int ack_received = pkt_get_seqnum(pkt);
 
             error = buffer_remove_acked(buffer,ack_received);
             ERROR("ack %d received, %d pkt removed\n",ack_received,error);
            
-            //printf("remove : ");fflush(stdout);
+            ERROR("remove : ");fflush(stdout);
             buffer_print(buffer,buffer->size);
         
             if(error > 0){
