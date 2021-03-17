@@ -11,31 +11,39 @@ int buffer_enqueue(buffer_t *buffer, pkt_t *pkt) {
         return -1;
     }
     newNode->pkt = pkt;
-    //newNode->pkt->seqnum = pkt_get_seqnum(pkt);
     if(buffer->size == 0) {
         newNode->next = newNode;
         newNode->prev = newNode;
         buffer->first = newNode;
         buffer->last = newNode;
     } else {
+        int first = 0;
         node_t* current = buffer->last;
         uint8_t pkt_seqnum = pkt_get_seqnum(pkt);
         while(pkt_seqnum < pkt_get_seqnum(current->pkt) && !(pkt_get_seqnum(current->pkt) > 200 && pkt_seqnum < 100)) { // condition for separating two blocks of 256
             current = current->prev;
             if(current == buffer->first) {
+                first = 1;
                 break;
             }
         }
-        // insert in front of current
-        newNode->next = current->next;
-        newNode->prev = current;
-        current->next->prev = newNode;
-        current->next = newNode;
-        if(current == buffer->last) {
-            buffer->last = newNode;
-        } else if(newNode->next == buffer->first) {
+        if(first){
+            newNode->next = current;
+            newNode->prev = current->prev;
             buffer->first = newNode;
         }
+        else{
+            newNode->next = current->next;
+            newNode->prev = current;
+            current->next->prev = newNode;
+            current->next = newNode;
+            if(current == buffer->last) {
+                buffer->last = newNode;
+            } else if(newNode->next == buffer->first) {
+                buffer->first = newNode;
+            }
+        }
+        
     }
     buffer->size += 1;
 
@@ -167,25 +175,6 @@ int is_in_buffer(buffer_t *buffer, uint8_t seqnum) {
 }
 
 void buffer_print(buffer_t *buffer, int amount) {
-    // int amount2;
-    // if (amount == 0) {
-    //     amount2 = buffer_size(buffer);
-    // } else {
-    //     amount2 = amount;
-    // }
-    // node_t *current = buffer->first;
-    // fprintf(stderr, "buffer CONTENT : ");
-    // for (int i=1; i <= (int)buffer_size(buffer) && i <= amount2; i++) {
-    //     fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));
-    //     current = current->next;
-    // }
-    // if (amount != 0) {
-    //     fprintf(stderr, "...\n");
-
-    // } else {
-    //     fprintf(stderr, "END\n");
-    // }
-    
     node_t* current = buffer->first;
     for(int i = 0 ; i < (int)buffer->size ; i++){
         fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));
@@ -194,24 +183,20 @@ void buffer_print(buffer_t *buffer, int amount) {
     fprintf(stderr,"END %d\n",amount);
 }
 
-// int main(int argc, char* argv[]){
-//     buffer_t* buffer = buffer_init();
-//     for(int i = 0; i < 257; i++){
-//         pkt_t* pkt = pkt_new();
-//         char* a = "SalutSalutArbitre";
+int main(){
+    buffer_t* buffer = buffer_init();
 
-//         pkt_set_payload(pkt, a, 17);
-//         pkt_set_type(pkt,PTYPE_DATA);
-//         pkt_set_tr(pkt,0);
-//         pkt_set_window(pkt,10);
-//         pkt_set_seqnum(pkt,i);
-//         pkt_set_timestamp(pkt,11);
-//         size_t length = (4*sizeof(uint32_t) + pkt_get_length(pkt));
-//         char* buf = (char*)malloc(sizeof(char)*100);
+    for(int i = 1; i < 10; i++){
+        pkt_t* packet = pkt_new();
+        pkt_set_seqnum(packet, i);
+        buffer_enqueue(buffer, packet);
+    }
 
-//         pkt_encode(pkt, buf, &length);
-//         buffer_enqueue(buffer,pkt);
-//     }
+    /*** Packet 4 ***/
+    pkt_t* packet0 = pkt_new();
+    pkt_set_seqnum(packet0, 0);
+    
+    buffer_enqueue(buffer, packet0);
 
-//     buffer_print(buffer,0);
-// }
+    buffer_print(buffer,0);
+}
