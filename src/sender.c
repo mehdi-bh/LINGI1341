@@ -183,6 +183,10 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                     }
                     buffer_enqueue(buffer,pkt);
                     ERROR("add : ");fflush(stdout);buffer_print(buffer,buffer->size);
+                    // Test truncated
+                    /*if(seqnum % 5 != 0){
+                        pkt_set_tr(pkt,1);
+                    }*/
                     st = pkt_encode(pkt,buf,&len);
                     
                     if(st){
@@ -227,24 +231,43 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 pkt_del(pkt);
                 continue;
             }
-            window = pkt_get_window(pkt);
-            int ack_received = pkt_get_seqnum(pkt);
-
-            error = buffer_remove_acked(buffer,ack_received);
-            ERROR("ack %d received, %d pkt removed\n",ack_received,error);
-           
-            ERROR("remove : ");fflush(stdout);
-            buffer_print(buffer,buffer->size);
-        
-            if(error > 0){
-                lastack = ack_received;
-                if(lastack == last_ack_to_receive){
-                    ERROR("Reached the EOF");
+            if(pkt_get_type(pkt) == PTYPE_NACK){
+                printf("NACK !!!!!!!!!");
+                pkt_t* resend = pkt_new();
+                resend = buffer_get_pkt(buffer,pkt_get_seqnum(pkt));
+                pkt_print(resend);
+                st = pkt_encode(resend,buf,&len);  
+                if(st){
                     pkt_del(pkt);
-                    eof = 1;
+                    ERROR("Error while encoding packet : %d",st);
+                    continue;
+                }
+                
+                ERROR("send the %d packet\n",seqnum);
+                error = send(sfd,buf,len,0);
+                if(error == -1){
+                    ERROR("ERROR while sending packet : %d",seqnum);
                 }
             }
+            else{
+                window = pkt_get_window(pkt);
+                int ack_received = pkt_get_seqnum(pkt);
 
+                error = buffer_remove_acked(buffer,ack_received);
+                ERROR("ack %d received, %d pkt removed\n",ack_received,error);
+            
+                ERROR("remove : ");fflush(stdout);
+                buffer_print(buffer,buffer->size);
+            
+                if(error > 0){
+                    lastack = ack_received;
+                    if(lastack == last_ack_to_receive){
+                        ERROR("Reached the EOF");
+                        pkt_del(pkt);
+                        eof = 1;
+                    }
+                }
+            }
         }
     }
 }

@@ -81,13 +81,14 @@ int write_buffer_to_file(buffer_t* buffer, const int fdOut){
     return 1;
 }
 
-int send_ack(const int sfd,int seqnum){
+int send_ack(const int sfd,int seqnum, uint8_t type){
+    printf("ACK TYPE : %d\n",type);
     pkt_t* ack = pkt_new();
     if(!ack){
         ERROR("Can't create ack packet");
         return -1;
     }
-    pkt_set_type(ack,PTYPE_ACK);
+    pkt_set_type(ack,type);
     pkt_set_seqnum(ack,seqnum);
     pkt_set_tr(ack,0);
     pkt_set_window(ack,window);
@@ -109,8 +110,15 @@ int send_ack(const int sfd,int seqnum){
         pkt_del(ack);
         return -1;
     }
-    last_acked = seqnum;
-    ERROR("ack %d sended",seqnum);
+
+    if(type == PTYPE_ACK){
+        last_acked = seqnum;
+        ERROR("ack %d sended",seqnum);
+    }
+    else{
+        ERROR("nack %d sended",seqnum);
+    }
+
 
     return 0;
 }
@@ -162,40 +170,46 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                 continue;
             }
             if(is_in_window(pkt_get_seqnum(pkt))){
-                error = buffer_enqueue(buffer,pkt);
-                if(error == -1){
-                    ERROR("Out of memory while adding to buffer");return;
-                }
-
-                if(pkt_get_type(pkt) == PTYPE_DATA 
-                    && pkt_get_length(pkt) == 0
-                    && pkt_get_seqnum(pkt) == last_acked){
-                    ERROR("EOF for sender");
-                    lastack_to_send = pkt_get_seqnum(pkt);
-                }else{
-                    error = write_buffer_to_file(buffer,fdOut);
-                    if(error == -1){
-                        ERROR("Error while writing");
-                        continue;
-                    }
-                }
-                send_ack(sfd,(last_writed+1)%MAX_SEQNUM);
-                // if(pkt_get_seqnum(pkt) > last_received)
-                //     last_received = pkt_get_seqnum(pkt);
-                // ERROR("Is in window %d vs %d",last_acked,pkt_get_seqnum(pkt));
-                // if(last_acked == pkt_get_seqnum(pkt)){
-                //     next_seqnum = get_first_oos_seqnum(buffer_enqueue);
-                //     if(pkt_get_seqnum(pkt) < get_first_oos_seqnum(buffer)){
-
-                //     }
-                //     send_ack(sfd,next_seqnum);
-                // }
+                // Test truncated
+                /*if(rand() % 5 == 0){
+                    pkt_set_tr(pkt,1);
+                }*/
                 
+                if(pkt_get_tr(pkt) == 1){
+                    send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_NACK);
+                }
+                else{
+                    error = buffer_enqueue(buffer,pkt);
+                    if(error == -1){
+                        ERROR("Out of memory while adding to buffer");return;
+                    }
 
+                    if(pkt_get_type(pkt) == PTYPE_DATA 
+                        && pkt_get_length(pkt) == 0
+                        && pkt_get_seqnum(pkt) == last_acked){
+                        ERROR("EOF for sender");
+                        lastack_to_send = pkt_get_seqnum(pkt);
+                    }else{
+                        error = write_buffer_to_file(buffer,fdOut);
+                        if(error == -1){
+                            ERROR("Error while writing");
+                            continue;
+                        }
+                    }
+                    send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_ACK);
+                    // if(pkt_get_seqnum(pkt) > last_received)
+                    //     last_received = pkt_get_seqnum(pkt);
+                    // ERROR("Is in window %d vs %d",last_acked,pkt_get_seqnum(pkt));
+                    // if(last_acked == pkt_get_seqnum(pkt)){
+                    //     next_seqnum = get_first_oos_seqnum(buffer_enqueue);
+                    //     if(pkt_get_seqnum(pkt) < get_first_oos_seqnum(buffer)){
+
+                    //     }
+                    //     send_ack(sfd,next_seqnum);
+                    // }
+                }
             }
-            
         }
-        
     }
 }
 
