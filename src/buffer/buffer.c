@@ -17,9 +17,8 @@ pkt_t* look_for_timedout_packet(buffer_t* buffer){
         return pkt;
     }
     node_t* cur = buffer->first;
-    time_t now;
     uint32_t now_s;
-    for(int i = 0 ; i < buffer->size ; i++){
+    for(int i = 0 ; i < (int)buffer->size ; i++){
         now_s = (uint32_t) time(NULL);
         if(now_s - pkt_get_timestamp(cur->pkt) > RTO ){
             ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
@@ -212,20 +211,20 @@ void buffer_print(buffer_t *buffer, int amount) {
     fprintf(stderr,"END %d\n",amount);
 }
 
-int main(){
-    buffer_t* buffer = buffer_init();
+// int main(){
+//     buffer_t* buffer = buffer_init();
 
-    for(int i = 1; i < 10; i++){
-        pkt_t* packet = pkt_new();
-        pkt_set_seqnum(packet, i);
-        buffer_enqueue(buffer, packet);
-    }
+//     for(int i = 1; i < 10; i++){
+//         pkt_t* packet = pkt_new();
+//         pkt_set_seqnum(packet, i);
+//         buffer_enqueue(buffer, packet);
+//     }
 
-    /*** Packet 4 ***/
-    pkt_t* packet0 = pkt_new();
-    pkt_set_seqnum(packet0, 0);
+//     /*** Packet 4 ***/
+//     pkt_t* packet0 = pkt_new();
+//     pkt_set_seqnum(packet0, 0);
     
-    buffer_enqueue(buffer, packet0);
+//     buffer_enqueue(buffer, packet0);
 
-    buffer_print(buffer,0);
-}
+//     buffer_print(buffer,0);
+// }

@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <time.h>
 
 #include "packet/packet.h"
 #include "socket/socket_manager.h"
@@ -44,7 +45,6 @@ int get_first_oos_seqnum(buffer_t* buffer){
     }
     int seq = last_acked;
     node_t* current = buffer->first;
-    pkt_t* pkt = current->pkt;
     while(current != NULL){
         if(seq == pkt_get_seqnum(current->pkt)-1){
             seq += 1;
@@ -60,7 +60,8 @@ int write_buffer_to_file(buffer_t* buffer, const int fdOut){
     node_t* current = buffer->first;
     pkt_t* pkt = current->pkt;
     buffer_print(buffer,0);
-    while(current != NULL && pkt_get_seqnum(pkt) == last_writed+1){
+    while(current != NULL && pkt_get_seqnum(current->pkt) == last_writed+1){
+        pkt = current->pkt;
         ssize_t writed = write(fdOut,pkt_get_payload(pkt),pkt_get_length(pkt));
         if(writed == -1){
             ERROR("Receiver can't write to file");
@@ -83,8 +84,9 @@ int send_ack(const int sfd,int seqnum){
     pkt_set_type(ack,PTYPE_ACK);
     pkt_set_seqnum(ack,seqnum);
     pkt_set_tr(ack,0);
-    pkt_set_payload(ack,NULL,0);
     pkt_set_window(ack,window);
+    pkt_set_timestamp(ack,(uint32_t) time(NULL));
+    pkt_set_payload(ack,NULL,0);
 
     char buf[ACK_SIZE];
     size_t len;
@@ -117,8 +119,9 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     buffer_t* buffer = buffer_init();
     int lastack_to_send = -2;
 
-    while((last_acked-1) != lastack_to_send){
-
+    while((last_acked) != lastack_to_send){
+        if(lastack_to_send > 0)
+        ERROR("LAST WRITED %d",last_writed);
         pfds[0].fd = sfd;
         pfds[0].events = POLLIN;
 
@@ -147,8 +150,8 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
             }
             ERROR("Packet [%d] received",pkt_get_seqnum(pkt));
 
-            if(is_in_buffer(buffer,pkt_get_seqnum(pkt)) || 
-                (pkt_get_seqnum(pkt) < last_acked  && pkt_get_length(pkt) != 0)){
+            if(is_in_buffer(buffer,pkt_get_seqnum(pkt))){ //|| 
+               // (pkt_get_seqnum(pkt) < last_acked  && pkt_get_length(pkt) != 0)){
                 ERROR("Duplicate packet [%d]",pkt_get_seqnum(pkt));
                 continue;
             }
@@ -165,13 +168,12 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                     lastack_to_send = pkt_get_seqnum(pkt);
                 }else{
                     error = write_buffer_to_file(buffer,fdOut);
-                    // error = write(fdOut,buf,s);
-                    // if(error == -1){
-                    //     ERROR("Error while writing");
-                    //     //return;
-                    // }
-                    send_ack(sfd,last_writed+1);
+                    if(error == -1){
+                        ERROR("Error while writing");
+                        continue;
+                    }
                 }
+                send_ack(sfd,last_writed+1);
                 // if(pkt_get_seqnum(pkt) > last_received)
                 //     last_received = pkt_get_seqnum(pkt);
                 // ERROR("Is in window %d vs %d",last_acked,pkt_get_seqnum(pkt));

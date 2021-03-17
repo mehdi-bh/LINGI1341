@@ -30,7 +30,7 @@ pkt_t* read_file(buffer_t* buffer, int fd){
         ERROR("Buffer is null");
         return NULL;
     }
-    if(buffer->size >= window){
+    if((int)buffer->size >= window){
         //ERROR("Buffer is full");
         return NULL;
     }
@@ -70,55 +70,55 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     return pkt;
 }
 
-int read_file_to_buffer(buffer_t* buffer, int fd){
-    if(!buffer){
-        ERROR("Buffer is null");
-        return 0;
-    }
+// int read_file_to_buffer(buffer_t* buffer, int fd){
+//     if(!buffer){
+//         ERROR("Buffer is null");
+//         return 0;
+//     }
 
-    if(buffer->size > window){
-        ERROR("Buffer is full");
-        return -1;
-    }
+//     if(buffer->size > window){
+//         ERROR("Buffer is full");
+//         return -1;
+//     }
 
-    int nbPackets = 0;
-    ssize_t datas;
+//     int nbPackets = 0;
+//     ssize_t datas;
 
-    while(buffer->size < window && datas > 0 ){
-        char payload[MAX_PAYLOAD_SIZE];
-        datas = read(fd,payload,MAX_PAYLOAD_SIZE);
-        if(datas == -1){
-            ERROR("Can't read data in file");
-            return 0;
-        }
+//     while(buffer->size < window && datas > 0 ){
+//         char payload[MAX_PAYLOAD_SIZE];
+//         datas = read(fd,payload,MAX_PAYLOAD_SIZE);
+//         if(datas == -1){
+//             ERROR("Can't read data in file");
+//             return 0;
+//         }
 
-        pkt_t* pkt = pkt_new();
-        if(!pkt){
-            ERROR("Can't create packet");
-            return 0;
-        }
+//         pkt_t* pkt = pkt_new();
+//         if(!pkt){
+//             ERROR("Can't create packet");
+//             return 0;
+//         }
 
-        pkt_status_code err;
-        err = pkt_set_type(pkt,PTYPE_DATA);
-        err = pkt_set_tr(pkt,0);
-        if(datas == 0){
-            err = pkt_set_seqnum(pkt,seqnum);
-            err = pkt_set_length(pkt,0);
-        }else{
-            err = pkt_set_seqnum(pkt,(seqnum++ % 256));
-            err = pkt_set_payload(pkt,payload,datas);
-        }        
-        if(err){
-            ERROR("Can't set data to the packet : %d",err);
-            pkt_del(pkt);
-            return 0;
-        }
+//         pkt_status_code err;
+//         err = pkt_set_type(pkt,PTYPE_DATA);
+//         err = pkt_set_tr(pkt,0);
+//         if(datas == 0){
+//             err = pkt_set_seqnum(pkt,seqnum);
+//             err = pkt_set_length(pkt,0);
+//         }else{
+//             err = pkt_set_seqnum(pkt,(seqnum++ % 256));
+//             err = pkt_set_payload(pkt,payload,datas);
+//         }        
+//         if(err){
+//             ERROR("Can't set data to the packet : %d",err);
+//             pkt_del(pkt);
+//             return 0;
+//         }
 
-        buffer_enqueue(buffer,pkt);
-        nbPackets++;
-    }
-    return nbPackets;
-}
+//         buffer_enqueue(buffer,pkt);
+//         nbPackets++;
+//     }
+//     return nbPackets;
+// }
 
 
 void read_write_loop_sender(const int sfd, const int fdIn){
@@ -192,8 +192,8 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                     }
                     
                     ERROR("send the %d packet\n",seqnum);
-                    ERROR("don't send packed %d : %d",seqnum,seqnum%5==0);
-                    if(seqnum % 40 != 5) 
+                    //ERROR("don't send packed %d : %d",seqnum,seqnum%5==0);
+                    //if(seqnum % 5 != 0) 
                         error = send(sfd,buf,len,0);
                     if(error == -1){
                         ERROR("ERROR while sending packet : %d",seqnum);
@@ -219,6 +219,11 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             error = pkt_decode(buf_ack,readed,pkt);
             if(error || pkt_get_type(pkt) == PTYPE_DATA){
                 ERROR("read_write_loop_sender : Error while decoding ack packet");
+                pkt_del(pkt);
+                continue;
+            }
+            if(pkt_get_seqnum(pkt) > seqnum){
+                ERROR("Ack superior to last seqnum sended");
                 pkt_del(pkt);
                 continue;
             }

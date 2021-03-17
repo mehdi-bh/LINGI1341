@@ -43,7 +43,7 @@ create_tests:
 	@cd tests && $(MAKE) -s run
 
 tests_sh:
-	./tests/ingi_tests/run_tests.sh
+	./tests/run_tests.sh
 
 tests: all create_tests tests_sh
 
