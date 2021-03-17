@@ -1,8 +1,37 @@
 #include "buffer.h"
 
+
+
 buffer_t *buffer_init() {
     return (buffer_t *) calloc(1, sizeof(buffer_t));
 }
+
+pkt_t* look_for_timedout_packet(buffer_t* buffer){
+    pkt_t* pkt = NULL;
+    if(!buffer){
+        ERROR("Buffer is null");
+        return pkt;
+    }
+    if(buffer->size == 0){
+        ERROR("No timed out packet buffer is empty");
+        return pkt;
+    }
+    node_t* cur = buffer->first;
+    time_t now;
+    uint32_t now_s;
+    for(int i = 0 ; i < buffer->size ; i++){
+        now_s = (uint32_t) time(NULL);
+        if(now_s - pkt_get_timestamp(cur->pkt) > RTO ){
+            ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
+            pkt_set_timestamp(cur->pkt,now_s);
+            return cur->pkt;
+        }
+        cur = cur->next;
+    }
+        
+    return NULL;
+}
+
 
 int buffer_enqueue(buffer_t *buffer, pkt_t *pkt) {
     node_t *newNode = (node_t *) malloc(sizeof(node_t));
@@ -167,25 +196,6 @@ int is_in_buffer(buffer_t *buffer, uint8_t seqnum) {
 }
 
 void buffer_print(buffer_t *buffer, int amount) {
-    // int amount2;
-    // if (amount == 0) {
-    //     amount2 = buffer_size(buffer);
-    // } else {
-    //     amount2 = amount;
-    // }
-    // node_t *current = buffer->first;
-    // fprintf(stderr, "buffer CONTENT : ");
-    // for (int i=1; i <= (int)buffer_size(buffer) && i <= amount2; i++) {
-    //     fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));
-    //     current = current->next;
-    // }
-    // if (amount != 0) {
-    //     fprintf(stderr, "...\n");
-
-    // } else {
-    //     fprintf(stderr, "END\n");
-    // }
-    
     node_t* current = buffer->first;
     for(int i = 0 ; i < (int)buffer->size ; i++){
         fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));

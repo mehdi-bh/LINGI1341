@@ -7,8 +7,14 @@
 #include <stdint.h>
 #include <string.h>
 #include <inttypes.h>
+#include <time.h>
 
+#include "../logs/log.h"
 #include "../packet/packet.h"
+
+#define RTO 3
+
+
 
 typedef struct node {
     struct node *next;
@@ -23,6 +29,8 @@ typedef struct buffer {
 } buffer_t;
 
 buffer_t *buffer_init();
+
+pkt_t* look_for_timedout_packet(buffer_t* buffer);
 
 int buffer_enqueue(buffer_t *buffer, pkt_t *pkt);
 

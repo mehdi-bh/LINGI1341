@@ -25,20 +25,41 @@ int print_usage(char *prog_name) {
 
 int window = 31;
 int next_seqnum = 0;
+int last_acked = 0;
 int last_writed = -1;
+int last_received = 0;
 int fd = STDOUT_FILENO;
 
 
 int is_in_window(int seqnum){
-    if(seqnum < (next_seqnum + window) % MAX_SEQNUM){
+    if(seqnum < (last_acked + window) % MAX_SEQNUM){
         return 1;
     }
     return 0;
 }
 
+int get_first_oos_seqnum(buffer_t* buffer){
+    if(buffer->size == 0){
+        return 0;
+    }
+    int seq = last_acked;
+    node_t* current = buffer->first;
+    pkt_t* pkt = current->pkt;
+    while(current != NULL){
+        if(seq == pkt_get_seqnum(current->pkt)-1){
+            seq += 1;
+        }else{
+            return seq+1;
+        }
+        current = current->next;
+    }
+    return seq + 1;
+}
+
 int write_buffer_to_file(buffer_t* buffer, const int fdOut){
     node_t* current = buffer->first;
     pkt_t* pkt = current->pkt;
+    buffer_print(buffer,0);
     while(current != NULL && pkt_get_seqnum(pkt) == last_writed+1){
         ssize_t writed = write(fdOut,pkt_get_payload(pkt),pkt_get_length(pkt));
         if(writed == -1){
@@ -46,7 +67,7 @@ int write_buffer_to_file(buffer_t* buffer, const int fdOut){
             return -1;
         }
         ERROR("packet %d writed\n",pkt_get_seqnum(pkt));
-        last_writed++;
+        last_writed = pkt_get_seqnum(pkt);
         current = current->next;
         pkt = buffer_remove(buffer,pkt_get_seqnum(pkt));
     }
@@ -80,11 +101,13 @@ int send_ack(const int sfd,int seqnum){
         pkt_del(ack);
         return -1;
     }
-
-    ERROR("\n\nack %d sended\n\n",next_seqnum);
+    last_acked = seqnum;
+    ERROR("ack %d sended",seqnum);
 
     return 0;
 }
+
+
 
 void read_write_loop_receiver(const int sfd,const int fdOut){
 
@@ -94,7 +117,7 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     buffer_t* buffer = buffer_init();
     int lastack_to_send = -2;
 
-    while((next_seqnum-1) != lastack_to_send){
+    while((last_acked-1) != lastack_to_send){
 
         pfds[0].fd = sfd;
         pfds[0].events = POLLIN;
@@ -122,17 +145,22 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
             if(st != PKT_OK || pkt_get_type(pkt) != PTYPE_DATA){
                 ERROR("Packet incorrect : %d",st);pkt_del(pkt);return;
             }
-            
+            ERROR("Packet [%d] received",pkt_get_seqnum(pkt));
+
+            if(is_in_buffer(buffer,pkt_get_seqnum(pkt)) || 
+                (pkt_get_seqnum(pkt) < last_acked  && pkt_get_length(pkt) != 0)){
+                ERROR("Duplicate packet [%d]",pkt_get_seqnum(pkt));
+                continue;
+            }
             if(is_in_window(pkt_get_seqnum(pkt))){
                 error = buffer_enqueue(buffer,pkt);
                 if(error == -1){
                     ERROR("Out of memory while adding to buffer");return;
                 }
-                window--;
 
                 if(pkt_get_type(pkt) == PTYPE_DATA 
                     && pkt_get_length(pkt) == 0
-                    && pkt_get_seqnum(pkt) == next_seqnum){
+                    && pkt_get_seqnum(pkt) == last_acked){
                     ERROR("EOF for sender");
                     lastack_to_send = pkt_get_seqnum(pkt);
                 }else{
@@ -142,14 +170,21 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                     //     ERROR("Error while writing");
                     //     //return;
                     // }
+                    send_ack(sfd,last_writed+1);
                 }
-                next_seqnum = pkt_get_seqnum(pkt) + 1;
-                window++;
-                send_ack(sfd,next_seqnum);
+                // if(pkt_get_seqnum(pkt) > last_received)
+                //     last_received = pkt_get_seqnum(pkt);
+                // ERROR("Is in window %d vs %d",last_acked,pkt_get_seqnum(pkt));
+                // if(last_acked == pkt_get_seqnum(pkt)){
+                //     next_seqnum = get_first_oos_seqnum(buffer_enqueue);
+                //     if(pkt_get_seqnum(pkt) < get_first_oos_seqnum(buffer)){
+
+                //     }
+                //     send_ack(sfd,next_seqnum);
+                // }
+                
 
             }
-
-
             
         }
         
