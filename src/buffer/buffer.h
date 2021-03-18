@@ -32,6 +32,8 @@ buffer_t* buffer_init();
 
 pkt_t* look_for_timedout_packet(buffer_t* buffer);
 
+pkt_t* buffer_remove_first(buffer_t* buffer);
+
 int buffer_enqueue(buffer_t *buffer, pkt_t *pkt);
 
 pkt_t* buffer_remove(buffer_t* buffer, uint8_t seqnum);

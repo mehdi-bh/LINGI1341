@@ -1,34 +1,7 @@
 #include "buffer.h"
 
-
-
 buffer_t *buffer_init() {
     return (buffer_t *) calloc(1, sizeof(buffer_t));
-}
-
-pkt_t* look_for_timedout_packet(buffer_t* buffer){
-    pkt_t* pkt = NULL;
-    if(!buffer){
-        ERROR("Buffer is null");
-        return pkt;
-    }
-    if(buffer->size == 0){
-        //ERROR("No timed out packet buffer is empty");
-        return pkt;
-    }
-    node_t* cur = buffer->first;
-    uint32_t now_s;
-    for(int i = 0 ; i < (int)buffer->size ; i++){
-        now_s = (uint32_t) time(NULL);
-        if(now_s - pkt_get_timestamp(cur->pkt) > RTO ){
-            ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
-            pkt_set_timestamp(cur->pkt,now_s);
-            return cur->pkt;
-        }
-        cur = cur->next;
-    }
-        
-    return NULL;
 }
 
 
@@ -91,8 +64,34 @@ int buffer_enqueue(buffer_t *buffer, pkt_t *pkt) {
         }
     }
     buffer->size += 1;
-
     return 0;
+}
+
+pkt_t* buffer_remove_first(buffer_t* buffer){
+    pkt_t* pkt = NULL;
+    if(!buffer){
+        return pkt;
+    }
+    if(buffer->size == 0){
+        return pkt;
+    }
+    pkt = buffer->first->pkt;
+    node_t* current = buffer->first;
+    if(buffer->size <= 1) {
+        buffer->first = NULL;
+        buffer->last = NULL;
+        pkt_t *packet = current->pkt;
+        node_free(current);
+        buffer->size = 0;
+        return packet;
+    }
+    current->prev->next = current->next;
+    current->next->prev = current->prev;
+    buffer->first = buffer->first->next;
+    pkt = current->pkt;
+    node_free(current);
+    buffer->size -= 1;
+    return pkt;
 }
 
 pkt_t *buffer_remove(buffer_t *buffer, uint8_t seqnum) {
@@ -203,6 +202,30 @@ void node_free(node_t *node){
     node = NULL;
 }
 
+pkt_t* look_for_timedout_packet(buffer_t* buffer){
+    pkt_t* pkt = NULL;
+    if(!buffer){
+        ERROR("Buffer is null");
+        return pkt;
+    }
+    if(buffer->size == 0){
+        //ERROR("No timed out packet buffer is empty");
+        return pkt;
+    }
+    node_t* cur = buffer->first;
+    uint32_t now_s;
+    for(int i = 0 ; i < (int)buffer->size ; i++){
+        now_s = (uint32_t) time(NULL);
+        if(now_s - pkt_get_timestamp(cur->pkt) > RTO ){
+            ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
+            pkt_set_timestamp(cur->pkt,now_s);
+            return cur->pkt;
+        }
+        cur = cur->next;
+    }
+    return NULL;
+}
+
 int is_in_buffer(buffer_t *buffer, uint8_t seqnum) {
     if (buffer == NULL || buffer->size == 0) {
         return 0;
@@ -216,7 +239,6 @@ int is_in_buffer(buffer_t *buffer, uint8_t seqnum) {
         current = current->next;
     }
     return 0;
-
 }
 
 void buffer_print(buffer_t *buffer) {
