@@ -163,7 +163,7 @@ pkt_status_code pkt_encode(const pkt_t* pkt, char *buf, size_t *len)
         cur += 1;
         memcpy(buf+cur,&(pkt->timestamp),sizeof(uint32_t));
         cur += 4;
-        uint32_t crc1 = ntohl(crc32(crc32(0L,Z_NULL,0),(Bytef *)buf,(uInt)sizeof(char)*6));
+        uint32_t crc1 = ntohl(crc32(crc32(0L,Z_NULL,0),(Bytef *)buf,(uInt)sizeof(char)*cur));
         memcpy(buf+cur,&(crc1),sizeof(uint32_t));
         cur += 4;
         *len = cur;

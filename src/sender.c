@@ -8,13 +8,13 @@
 
 #define BUFF_LEN 
 #define ACK_SIZE 10
+#define MAX_SEQNUM 256
 
 int window = 1;
 //receiver window
 int window_r = 31;
 int fd = STDIN_FILENO;
 int seqnum = 0;
-int eof = 0;
 int lastack = -1;
 uint8_t nextSeqnum;
 struct timeval tv;
@@ -53,12 +53,12 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     err = pkt_set_tr(pkt,0);
     err = pkt_set_window(pkt,window);
     err = pkt_set_timestamp(pkt,(uint32_t)now);
+    err = pkt_set_seqnum(pkt,seqnum);
     if(readed == 0){
-        err = pkt_set_seqnum(pkt,seqnum);
         err = pkt_set_length(pkt,0);
     }else{
-        err = pkt_set_seqnum(pkt,(seqnum++ % 256));
         err = pkt_set_payload(pkt,paylaod,readed);
+        seqnum = (seqnum + 1) % MAX_SEQNUM;
     }
     
     if(err){
@@ -66,6 +66,7 @@ pkt_t* read_file(buffer_t* buffer, int fd){
         pkt_del(pkt);
         return NULL;
     }
+
 
     return pkt;
 }
@@ -138,7 +139,9 @@ void read_write_loop_sender(const int sfd, const int fdIn){
     buffer_t* buffer = buffer_init();
 
     pkt_status_code st;        
-    while(!eof){
+    int EOF_ACKED = 0;
+
+    while(EOF_ACKED != 2){
 
         pfds[0].fd = fdIn;
         pfds[0].events = POLLIN;
@@ -207,6 +210,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             //}
         }
         if(pfds[1].revents != 0 && pfds[1].revents & POLLIN){
+            ERROR("IM IN");
             readed = read(sfd,buf_ack,ACK_SIZE);
             if(readed == -1){
                 ERROR("Error while reading ack");
@@ -254,17 +258,19 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 int ack_received = pkt_get_seqnum(pkt);
 
                 error = buffer_remove_acked(buffer,ack_received);
-                ERROR("ack %d received, %d pkt removed\n",ack_received,error);
+                ERROR("ack %d received, %d pkt removed",ack_received,error);
             
                 ERROR("remove : ");fflush(stdout);
                 buffer_print(buffer,buffer->size);
-            
-                if(error > 0){
-                    lastack = ack_received;
+                fprintf(stderr,"\n");
+
+                // ERROR("Last received %d vs received %d",lastack,ack_received);
+                if(error > 0 || last_ack_to_receive != -1){
+                lastack = ack_received;
                     if(lastack == last_ack_to_receive){
                         ERROR("Reached the EOF");
                         pkt_del(pkt);
-                        eof = 1;
+                        EOF_ACKED++;
                     }
                 }
             }

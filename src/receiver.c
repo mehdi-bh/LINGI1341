@@ -16,7 +16,7 @@
 #include "logs/log.h"
 
 #define MAX_PKT_SIZE 512 + 16
-#define MAX_SEQNUM 255
+#define MAX_SEQNUM 256
 #define ACK_SIZE 10
 
 int print_usage(char *prog_name) {
@@ -34,7 +34,7 @@ int fd = STDOUT_FILENO;
 
 int is_in_window(int seqnum){
     if(seqnum < last_writed){
-        if(seqnum - last_writed + MAX_SEQNUM <= window)
+        if(seqnum + MAX_SEQNUM - last_writed < window)
             return 1;
         return 0;
     }else{
@@ -66,14 +66,14 @@ int write_buffer_to_file(buffer_t* buffer, const int fdOut){
     node_t* current = buffer->first;
     pkt_t* pkt = current->pkt;
     buffer_print(buffer,0);
-    while(current != NULL && pkt_get_seqnum(current->pkt) == last_writed+1){
+    while(current != NULL && pkt_get_seqnum(current->pkt) == (last_writed+1)%MAX_SEQNUM){
         pkt = current->pkt;
         ssize_t writed = write(fdOut,pkt_get_payload(pkt),pkt_get_length(pkt));
         if(writed == -1){
             ERROR("Receiver can't write to file");
             return -1;
         }
-        ERROR("packet %d writed\n",pkt_get_seqnum(pkt));
+        ERROR("packet %d writed",pkt_get_seqnum(pkt));
         last_writed = pkt_get_seqnum(pkt);
         current = current->next;
         pkt = buffer_remove(buffer,pkt_get_seqnum(pkt));
@@ -110,7 +110,6 @@ int send_ack(const int sfd,int seqnum, uint8_t type){
         pkt_del(ack);
         return -1;
     }
-
     if(type == PTYPE_ACK){
         last_acked = seqnum;
         ERROR("ack %d sended",seqnum);
@@ -132,19 +131,23 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     pfds = malloc(sizeof(struct pollfd)*nfds);
     buffer_t* buffer = buffer_init();
     int lastack_to_send = -2;
+    int ready;
 
-    while((last_acked) != lastack_to_send){
-        if(lastack_to_send > 0)
-        ERROR("LAST WRITED %d",last_writed);
+    while(last_acked != lastack_to_send && ready != 0){
+
         pfds[0].fd = sfd;
         pfds[0].events = POLLIN;
 
-        int ready;
         
-        ready = poll(pfds,nfds,-1);
+        ready = poll(pfds,nfds,1 * 1000);
+        ERROR("ready %d",ready);
         if(ready == -1){
             ERROR("Poll error");
             return;
+        }
+        if(ready == 0){
+            ERROR("Connection timed out, consider finished");
+            //return;
         }
 
         int error;
@@ -197,16 +200,6 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                         }
                     }
                     send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_ACK);
-                    // if(pkt_get_seqnum(pkt) > last_received)
-                    //     last_received = pkt_get_seqnum(pkt);
-                    // ERROR("Is in window %d vs %d",last_acked,pkt_get_seqnum(pkt));
-                    // if(last_acked == pkt_get_seqnum(pkt)){
-                    //     next_seqnum = get_first_oos_seqnum(buffer_enqueue);
-                    //     if(pkt_get_seqnum(pkt) < get_first_oos_seqnum(buffer)){
-
-                    //     }
-                    //     send_ack(sfd,next_seqnum);
-                    // }
                 }
             }
         }
