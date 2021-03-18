@@ -31,6 +31,32 @@ pkt_t* look_for_timedout_packet(buffer_t* buffer){
     return NULL;
 }
 
+pkt_t* buffer_remove_first(buffer_t* buffer){
+    pkt_t* pkt = NULL;
+    if(!buffer){
+        return pkt;
+    }
+    if(buffer->size == 0){
+        return pkt;
+    }
+    pkt = buffer->first->pkt;
+    node_t* current = buffer->first;
+    if(buffer->size <= 1) {
+        buffer->first = NULL;
+        buffer->last = NULL;
+        pkt_t *packet = current->pkt;
+        node_free(current);
+        buffer->size = 0;
+        return packet;
+    }
+    current->prev->next = current->next;
+    current->next->prev = current->prev;
+    buffer->first = buffer->first->next;
+    pkt = current->pkt;
+    node_free(current);
+    buffer->size -= 1;
+    return pkt;
+}
 
 int buffer_enqueue(buffer_t *buffer, pkt_t *pkt) {
     node_t *newNode = (node_t *) malloc(sizeof(node_t));
@@ -211,44 +237,27 @@ void buffer_print(buffer_t *buffer, int amount) {
     fprintf(stderr,"END %d\n",amount);
 }
 
-// int main(){
-//     buffer_t* buffer = buffer_init();
+/*int main(){
+    buffer_t* buffer = buffer_init();
 
-//     for(int i = 3; i < 10; i++){
-//         pkt_t* packet = pkt_new();
-//         pkt_set_seqnum(packet, i);
-//         buffer_enqueue(buffer, packet);
-//     }
-
-//     /*** Packet 1 ***/
-//     pkt_t* packet1 = pkt_new();
-//     pkt_set_seqnum(packet1, 1);
-//     buffer_enqueue(buffer, packet1);
-
-//     /*** Packet 2 ***/
-//     pkt_t* packet2 = pkt_new();
-//     pkt_set_seqnum(packet2, 2);
-//     buffer_enqueue(buffer, packet2);
-
-//     /*** Packet 0 ***/
-//     pkt_t* packet0 = pkt_new();
-//     pkt_set_seqnum(packet0, 0);
-//     buffer_enqueue(buffer, packet0);
-
-//     /*** Packet 11 ***/
-//     pkt_t* packet11 = pkt_new();
-//     pkt_set_seqnum(packet11, 11);
-//     buffer_enqueue(buffer, packet11);
-
-//     /*** Packet 10 ***/
-//     pkt_t* packet10 = pkt_new();
-//     pkt_set_seqnum(packet10, 10);
-//     buffer_enqueue(buffer, packet10);
-
-//     /*** Packet 12 ***/
-//     pkt_t* packet12 = pkt_new();
-//     pkt_set_seqnum(packet12, 12);
-//     buffer_enqueue(buffer, packet12);
-
-//     buffer_print(buffer,0);
-// }
+    for(int i = 3; i < 10; i++){
+        pkt_t* packet = pkt_new();
+        pkt_set_seqnum(packet, i);
+        buffer_enqueue(buffer, packet);
+    }
+    buffer_print(buffer,0);
+    buffer_remove_first(buffer);
+    buffer_print(buffer,0);
+    buffer_remove_first(buffer);
+    buffer_print(buffer,0);
+    buffer_remove_first(buffer);
+    buffer_print(buffer,0);
+    buffer_remove_first(buffer);
+    buffer_print(buffer,0);
+    buffer_remove_first(buffer);
+    buffer_print(buffer,0);
+    buffer_remove_first(buffer);
+    buffer_print(buffer,0);
+    buffer_remove_first(buffer);
+    buffer_print(buffer,0);
+}*/
