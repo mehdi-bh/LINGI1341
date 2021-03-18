@@ -16,6 +16,7 @@ int window_r = 31;
 int fd = STDIN_FILENO;
 int seqnum = 0;
 int lastack = -1;
+int nb_sended = 0;
 uint8_t nextSeqnum;
 struct timeval tv;
 
@@ -23,6 +24,26 @@ int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
     return EXIT_FAILURE;
 }
+
+int is_in_window(int seqnum_to_test){
+    if(seqnum_to_test < seqnum){
+        if(seqnum_to_test + MAX_SEQNUM - seqnum < window)
+            return 1;
+        return 0;
+    }else{
+        if(seqnum_to_test - seqnum <= window)
+            return 1;
+        return 0;
+    }
+}
+
+// int is_valid(int seqnum_to_test){
+//     if(seqnum_to_test < window){
+//         if(nb_sended % MAX_SEQNUM < window){
+
+//         }
+//     }
+// }
 
 
 pkt_t* read_file(buffer_t* buffer, int fd){
@@ -59,6 +80,7 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     }else{
         err = pkt_set_payload(pkt,paylaod,readed);
         seqnum = (seqnum + 1) % MAX_SEQNUM;
+        nb_sended++;
     }
     
     if(err){
@@ -140,20 +162,24 @@ void read_write_loop_sender(const int sfd, const int fdIn){
 
     pkt_status_code st;        
     int EOF_ACKED = 0;
+    int ready = -1;
+    int nb_last_ack_to = 0;
 
-    while(EOF_ACKED != 2){
+    while(EOF_ACKED != 2 && ready != 0){
 
         pfds[0].fd = fdIn;
         pfds[0].events = POLLIN;
         pfds[1].fd = sfd;
         pfds[1].events = POLLIN;
 
-        int ready;
         
-        ready = poll(pfds,nfds,-1);
+        ready = poll(pfds,nfds,10 * 1000);
         if(ready == -1){
             ERROR("Poll error");
             return;
+        }
+        if(ready == 0){
+            ERROR("Connection timed out");
         }
 
 
@@ -161,6 +187,13 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             
             pkt_to = look_for_timedout_packet(buffer);
             if(pkt_to){
+                if(pkt_get_seqnum(pkt_to) == last_ack_to_receive){
+                    nb_last_ack_to++;
+                    if(nb_last_ack_to == 4){
+                        ERROR("EOF packet timed out 4 times, no response. Connection finished");
+                        break;
+                    }
+                }
                 st = pkt_encode(pkt_to,buf,&len);
                     
                 if(st){
@@ -175,42 +208,39 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 }
                 ERROR("Packet timed out [%d] re sended",pkt_get_seqnum(pkt_to));
             }
-            //else{
             
-                pkt = read_file(buffer,fdIn);
-                // error = read_file_to_buffer(buffer,fdIn);
-                if(pkt && last_ack_to_receive == -1){
-                    if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
-                        last_ack_to_receive = seqnum;
-                        ERROR("last_ack_to_receive = %d\n",seqnum);
-                    }
-                    buffer_enqueue(buffer,pkt);
-                    ERROR("add : ");fflush(stdout);buffer_print(buffer,buffer->size);
-                    // Test truncated
-                    /*if(seqnum % 5 != 0){
-                        pkt_set_tr(pkt,1);
-                    }*/
-                    st = pkt_encode(pkt,buf,&len);
-                    
-                    if(st){
-                        pkt_del(pkt);
-                        ERROR("Error while encoding packet : %d",st);
-                        continue;
-                    }
-                    
-                    ERROR("send the %d packet\n",seqnum);
-                    //ERROR("don't send packed %d : %d",seqnum,seqnum%5==0);
-                    //if(seqnum % 5 != 0) 
-                        error = send(sfd,buf,len,0);
-                    if(error == -1){
-                        ERROR("ERROR while sending packet : %d",seqnum);
-                    }
-                
+            pkt = read_file(buffer,fdIn);
+            if(pkt && last_ack_to_receive == -1){
+                if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
+                    last_ack_to_receive = seqnum;
+                    ERROR("last_ack_to_receive = %d\n",seqnum);
                 }
-            //}
+                buffer_enqueue(buffer,pkt);
+                ERROR("add : ");fflush(stdout);buffer_print(buffer);
+                // Test truncated
+                /*if(seqnum % 5 != 0){
+                    pkt_set_tr(pkt,1);
+                }*/
+                st = pkt_encode(pkt,buf,&len);
+                
+                if(st){
+                    pkt_del(pkt);
+                    ERROR("Error while encoding packet : %d",st);
+                    continue;
+                }
+                
+                ERROR("Send the packet [%d]",pkt_get_seqnum(pkt));
+                //ERROR("don't send packed %d : %d",seqnum,seqnum%5==0);
+                //if(seqnum % 5 != 0) 
+                error = send(sfd,buf,len,0);
+                ERROR("%d bytes sended\n",error);
+                if(error == -1){
+                    ERROR("ERROR while sending packet : %d",seqnum);
+                }
+            
+            }
         }
         if(pfds[1].revents != 0 && pfds[1].revents & POLLIN){
-            ERROR("IM IN");
             readed = read(sfd,buf_ack,ACK_SIZE);
             if(readed == -1){
                 ERROR("Error while reading ack");
@@ -230,16 +260,20 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 pkt_del(pkt);
                 continue;
             }
-            if(pkt_get_seqnum(pkt) > seqnum){
-                ERROR("Ack superior to last seqnum sended");
+            //Black magic condition
+            if(pkt_get_seqnum(pkt) > nb_sended+1 % MAX_SEQNUM){
+                //buffer_get_pkt(buffer,pkt_get_seqnum(pkt)-(1-pkt_get_tr(pkt)) ) == NULL && (last_ack_to_receive == pkt_get_seqnum(pkt))){
+                ERROR("Ack [%d] invalid",pkt_get_seqnum(pkt));
                 pkt_del(pkt);
                 continue;
             }
             if(pkt_get_type(pkt) == PTYPE_NACK){
-                printf("NACK !!!!!!!!!");
+                ERROR("Packed [%d] was truncated",pkt_get_seqnum(pkt));
+                //pkt_del(pkt);
+                // continue;
                 pkt_t* resend = pkt_new();
                 resend = buffer_get_pkt(buffer,pkt_get_seqnum(pkt));
-                pkt_print(resend);
+//                pkt_print(resend);
                 st = pkt_encode(resend,buf,&len);  
                 if(st){
                     pkt_del(pkt);
@@ -247,11 +281,12 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                     continue;
                 }
                 
-                ERROR("send the %d packet\n",seqnum);
+                ERROR("Send directly the truncated [%d] packet\n",seqnum);
                 error = send(sfd,buf,len,0);
                 if(error == -1){
                     ERROR("ERROR while sending packet : %d",seqnum);
                 }
+                
             }
             else{
                 window = pkt_get_window(pkt);
@@ -261,7 +296,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 ERROR("ack %d received, %d pkt removed",ack_received,error);
             
                 ERROR("remove : ");fflush(stdout);
-                buffer_print(buffer,buffer->size);
+                buffer_print(buffer);
                 fprintf(stderr,"\n");
 
                 // ERROR("Last received %d vs received %d",lastack,ack_received);
@@ -335,39 +370,24 @@ int main(int argc, char **argv) {
         }
     }
 
+    int sock;
+
     const char* err = real_address(receiver_ip,&receiver_addr);
     if(err){
         ERROR("Could not resolve hostname %s : %d",receiver_ip,receiver_port);
         exit(EXIT_FAILURE);
     }
 
-    int sock = create_socket(NULL,-1,&receiver_addr,receiver_port);
+    sock = create_socket(NULL,-1,&receiver_addr,receiver_port);
     if(sock < 0){
         ERROR("Failed to create socket at %s : %d",receiver_ip,receiver_port);
         exit(EXIT_FAILURE);
     }
 
-
-    // int cpt = 0;
-    // while(!eof){
-    //     pkt = read_file(buffer,fd);
-    //     if(pkt){
-    //         buffer_enqueue(buffer,pkt);
-    //         st = pkt_encode(pkt,buf,&len);
-    //         if(st){
-    //            ERROR("Error while encoding packet : %d",st); 
-    //         }else{
-    //             send(sock,buf,len,0);
-    //             cpt++;
-    //         }
-    //     }
-    // }
-    // printf("%d packet sended\n",cpt);
-
     read_write_loop_sender(sock,fd);
-    /*buffer_t* buffer = buffer_init();
-    int nb = read_file_to_buffer(buffer,fd);
-    printf("%d",nb);
-    buffer_print(buffer,0);*/
+
+    close(sock);
+    close(fd);
+
     return EXIT_SUCCESS;
 }

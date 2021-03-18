@@ -12,7 +12,7 @@
 #include "../logs/log.h"
 #include "../packet/packet.h"
 
-#define RTO 3
+#define RTO 1
 
 
 
@@ -42,7 +42,7 @@ pkt_t* buffer_get_pkt(buffer_t* buffer, uint8_t seqnum);
 
 size_t buffer_size(buffer_t* buffer);
 
-void buffer_print(buffer_t* buffer, int amount);
+void buffer_print(buffer_t* buffer);
 
 int is_in_buffer(buffer_t* buffer, uint8_t seqnum);
 

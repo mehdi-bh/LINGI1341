@@ -13,7 +13,7 @@ pkt_t* look_for_timedout_packet(buffer_t* buffer){
         return pkt;
     }
     if(buffer->size == 0){
-        ERROR("No timed out packet buffer is empty");
+        //ERROR("No timed out packet buffer is empty");
         return pkt;
     }
     node_t* cur = buffer->first;
@@ -48,18 +48,35 @@ int buffer_enqueue(buffer_t *buffer, pkt_t *pkt) {
         int first = 0;
         node_t* current = buffer->last;
         uint8_t pkt_seqnum = pkt_get_seqnum(pkt);
-        while(pkt_seqnum < pkt_get_seqnum(current->pkt) && !(pkt_get_seqnum(current->pkt) > 200 && pkt_seqnum < 100)) {
-            current = current->prev;
-            if(current == buffer->first) {
-                if(pkt_seqnum < pkt_get_seqnum(buffer->first->pkt)){
-                    first = 1;
+        if(pkt_get_seqnum(current->pkt) < 50 && pkt_seqnum > 205){
+            current = buffer->first;
+            if(pkt_seqnum < pkt_get_seqnum(current->pkt)
+                || (pkt_seqnum > pkt_get_seqnum(current->pkt) && pkt_get_seqnum(current->pkt) < 50)){
+                first = 1;
+            }
+            while(pkt_seqnum > pkt_get_seqnum(current->next->pkt)  && first != 1
+                && !(pkt_get_seqnum(current->next->pkt) < 50  && pkt_seqnum > 205)){
+                current = current->next;
+            }
+
+        }
+        else{
+            int cpt = 0;
+            while(pkt_seqnum < pkt_get_seqnum(current->pkt) 
+                && !(pkt_get_seqnum(current->pkt) > 205  && pkt_seqnum < 50)){
+                current = current->prev;
+                if(current == buffer->first) {
+                    if(pkt_seqnum < pkt_get_seqnum(buffer->first->pkt)){
+                        first = 1;
+                    }
+                    break;
                 }
-                break;
             }
         }
         if(first){
             newNode->prev = current->prev;
             newNode->next = current;
+            current->prev->next = newNode;
             current->prev = newNode;
             buffer->first = newNode;
         }
@@ -202,53 +219,87 @@ int is_in_buffer(buffer_t *buffer, uint8_t seqnum) {
 
 }
 
-void buffer_print(buffer_t *buffer, int amount) {
+void buffer_print(buffer_t *buffer) {
     node_t* current = buffer->first;
     for(int i = 0 ; i < (int)buffer->size ; i++){
         fprintf(stderr, "%i -> ", pkt_get_seqnum(current->pkt));
         current = current->next;
     }
-    fprintf(stderr,"END %d\n",amount);
+    fprintf(stderr,"END %ld\n",buffer->size);
 }
 
 // int main(){
 //     buffer_t* buffer = buffer_init();
 
-//     for(int i = 3; i < 10; i++){
-//         pkt_t* packet = pkt_new();
-//         pkt_set_seqnum(packet, i);
-//         buffer_enqueue(buffer, packet);
-//     }
+//     // for(int i = 3; i < 10; i++){
+//     //     pkt_t* packet = pkt_new();
+//     //     pkt_set_seqnum(packet, i);
+//     //     buffer_enqueue(buffer, packet);
+//     // }
 
 //     /*** Packet 1 ***/
-//     pkt_t* packet1 = pkt_new();
-//     pkt_set_seqnum(packet1, 1);
-//     buffer_enqueue(buffer, packet1);
+//     // pkt_t* p1 = pkt_new();
+//     // pkt_set_seqnum(p1, 127);
+//     // buffer_enqueue(buffer, p1);
 
-//     /*** Packet 2 ***/
-//     pkt_t* packet2 = pkt_new();
-//     pkt_set_seqnum(packet2, 2);
-//     buffer_enqueue(buffer, packet2);
+//     // /*** Packet 2 ***/
+//     // pkt_t* p2 = pkt_new();
+//     // pkt_set_seqnum(p2, 128);
+//     // buffer_enqueue(buffer, p2);
 
-//     /*** Packet 0 ***/
-//     pkt_t* packet0 = pkt_new();
-//     pkt_set_seqnum(packet0, 0);
-//     buffer_enqueue(buffer, packet0);
+//     // /*** Packet 0 ***/
+//     // pkt_t* p3 = pkt_new();
+//     // pkt_set_seqnum(p3, 129);
+//     // buffer_enqueue(buffer, p3);
 
-//     /*** Packet 11 ***/
-//     pkt_t* packet11 = pkt_new();
-//     pkt_set_seqnum(packet11, 11);
-//     buffer_enqueue(buffer, packet11);
+//     // /*** Packet 11 ***/
+//     // pkt_t* p4 = pkt_new();
+//     // pkt_set_seqnum(p4, 130);
+//     // buffer_enqueue(buffer, p4);
 
-//     /*** Packet 10 ***/
-//     pkt_t* packet10 = pkt_new();
-//     pkt_set_seqnum(packet10, 10);
-//     buffer_enqueue(buffer, packet10);
+//     // buffer_print(buffer);
+
+//     // /*** Packet 10 ***/
+//     // pkt_t* packet10 = pkt_new();
+//     // pkt_set_seqnum(packet10, 126);
+//     // buffer_enqueue(buffer, packet10);
+
+//     // buffer_print(buffer);
+
+//     pkt_t* p4 = pkt_new();
+//     pkt_set_seqnum(p4, 4);
+//     buffer_enqueue(buffer, p4);
+
+//     pkt_t* p6 = pkt_new();
+//     pkt_set_seqnum(p6, 6);
+//     buffer_enqueue(buffer, p6);
+
+
 
 //     /*** Packet 12 ***/
 //     pkt_t* packet12 = pkt_new();
-//     pkt_set_seqnum(packet12, 12);
+//     pkt_set_seqnum(packet12, 255);
 //     buffer_enqueue(buffer, packet12);
 
-//     buffer_print(buffer,0);
+//     pkt_t* packet13 = pkt_new();
+//     pkt_set_seqnum(packet13, 251);
+//     buffer_enqueue(buffer, packet13);
+
+//     pkt_t* p5 = pkt_new();
+//     pkt_set_seqnum(p5, 5);
+//     buffer_enqueue(buffer, p5);
+
+
+//     pkt_t* packet14 = pkt_new();
+//     pkt_set_seqnum(packet14, 252);
+//     buffer_enqueue(buffer, packet14);
+
+//     buffer_print(buffer);
+
+//     pkt_t* packet15 = pkt_new();
+//     pkt_set_seqnum(packet15, 3);
+//     buffer_enqueue(buffer, packet15);
+
+
+//     buffer_print(buffer);
 // }
