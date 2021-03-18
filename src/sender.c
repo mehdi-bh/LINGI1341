@@ -23,8 +23,9 @@ struct timeval tv;
 int stats_data_sent = 0;
 int stats_ack_received = 0;
 int stats_nack_received = 0;
-int stats_min_rtt = 0;
-int stats_max_rtt = 0;
+int stats_min_rtt = INT_MAX;
+int stats_max_rtt = INT_MIN;
+int rtt[256];
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
@@ -180,6 +181,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 if(error == -1){
                     ERROR("ERROR while sending timed out packet : %d",pkt_get_timestamp(pkt_to));
                 }
+                rtt[pkt_get_seqnum(pkt_to)] = time(NULL);
                 stats_data_sent++;
                 ERROR("Packet timed out [%d] re sended",pkt_get_seqnum(pkt_to));
             }
@@ -213,6 +215,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                     if(error == -1){
                         ERROR("ERROR while sending packet : %d",seqnum);
                     }
+                    rtt[pkt_get_seqnum(pkt)] = time(NULL);
                     stats_data_sent++;
                 }
             //}
@@ -260,6 +263,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 if(error == -1){
                     ERROR("ERROR while sending packet : %d",seqnum);
                 }
+                rtt[pkt_get_seqnum(pkt)] = time(NULL);
                 stats_data_sent++;
                 stats_nack_received++;
             }
@@ -274,7 +278,10 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 buffer_print(buffer,buffer->size);
                 fprintf(stderr,"\n");
                 stats_ack_received++;
-
+                int rtt_total = time(NULL) - rtt[pkt_get_seqnum(pkt)];
+                if(rtt_total > stats_max_rtt) stats_max_rtt = rtt_total;
+                if(rtt_total < stats_min_rtt) stats_min_rtt = rtt_total;
+                
                 // ERROR("Last received %d vs received %d",lastack,ack_received);
                 if(error > 0 || last_ack_to_receive != -1){
                 lastack = ack_received;
