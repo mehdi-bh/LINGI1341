@@ -19,6 +19,13 @@ int lastack = -1;
 uint8_t nextSeqnum;
 struct timeval tv;
 
+// Stats
+int stats_data_sent = 0;
+int stats_ack_received = 0;
+int stats_nack_received = 0;
+int stats_min_rtt = 0;
+int stats_max_rtt = 0;
+
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-f filename] [-s stats_filename] receiver_ip receiver_port", prog_name);
     return EXIT_FAILURE;
@@ -173,6 +180,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 if(error == -1){
                     ERROR("ERROR while sending timed out packet : %d",pkt_get_timestamp(pkt_to));
                 }
+                stats_data_sent++;
                 ERROR("Packet timed out [%d] re sended",pkt_get_seqnum(pkt_to));
             }
             //else{
@@ -205,7 +213,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                     if(error == -1){
                         ERROR("ERROR while sending packet : %d",seqnum);
                     }
-                
+                    stats_data_sent++;
                 }
             //}
         }
@@ -252,6 +260,8 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 if(error == -1){
                     ERROR("ERROR while sending packet : %d",seqnum);
                 }
+                stats_data_sent++;
+                stats_nack_received++;
             }
             else{
                 window = pkt_get_window(pkt);
@@ -263,6 +273,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 ERROR("remove : ");fflush(stdout);
                 buffer_print(buffer,buffer->size);
                 fprintf(stderr,"\n");
+                stats_ack_received++;
 
                 // ERROR("Last received %d vs received %d",lastack,ack_received);
                 if(error > 0 || last_ack_to_receive != -1){
@@ -278,6 +289,19 @@ void read_write_loop_sender(const int sfd, const int fdIn){
     }
 }
 
+int write_stats_in_file(char* filename){
+    FILE *file = fopen(filename,"w");
+    if(file == NULL){
+        return -1;
+    }
+
+    fprintf(file,"data_sent:%d\n",stats_data_sent);
+    fprintf(file,"ack_received:%d\n",stats_ack_received);
+    fprintf(file,"nack_received:%d\n",stats_nack_received);
+    fprintf(file,"min_rtt:%d\n",stats_min_rtt);
+    fprintf(file,"max_rtt:%d\n",stats_max_rtt);
+    return 0;
+}
 
 // gcc sender.c packet/packet.c logs/log.c socket/socket_manager.c buffer/buffer.c -o sender -lz
 // gcc sender.c -o sender
@@ -365,6 +389,8 @@ int main(int argc, char **argv) {
     // printf("%d packet sended\n",cpt);
 
     read_write_loop_sender(sock,fd);
+
+    write_stats_in_file(stats_filename);
     /*buffer_t* buffer = buffer_init();
     int nb = read_file_to_buffer(buffer,fd);
     printf("%d",nb);

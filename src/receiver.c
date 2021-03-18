@@ -31,6 +31,14 @@ int last_writed = -1;
 int last_received = 0;
 int fd = STDOUT_FILENO;
 
+// Stats
+int stats_data_received = 0;
+int stats_data_truncated_received = 0;
+int stats_ack_sent = 0;
+int stats_nack_sent = 0;
+int stats_packet_ignored = 0;
+int stats_packet_duplicated = 0;
+
 
 int is_in_window(int seqnum){
     if(seqnum < last_writed){
@@ -113,9 +121,11 @@ int send_ack(const int sfd,int seqnum, uint8_t type){
     if(type == PTYPE_ACK){
         last_acked = seqnum;
         ERROR("ack %d sended",seqnum);
+        stats_ack_sent++;
     }
     else{
         ERROR("nack %d sended",seqnum);
+        stats_nack_sent++;
     }
 
 
@@ -131,7 +141,7 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     pfds = malloc(sizeof(struct pollfd)*nfds);
     buffer_t* buffer = buffer_init();
     int lastack_to_send = -2;
-    int ready;
+    int ready = -1;
 
     while(last_acked != lastack_to_send && ready != 0){
 
@@ -163,23 +173,27 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
             }
             st = pkt_decode(buf,s,pkt);
             if(st != PKT_OK || pkt_get_type(pkt) != PTYPE_DATA){
+                stats_packet_ignored++;
                 ERROR("Packet incorrect : %d",st);pkt_del(pkt);return;
             }
             ERROR("Packet [%d] received",pkt_get_seqnum(pkt));
+            stats_data_received += 1;
 
             if(is_in_buffer(buffer,pkt_get_seqnum(pkt))){ //|| 
                // (pkt_get_seqnum(pkt) < last_acked  && pkt_get_length(pkt) != 0)){
                 ERROR("Duplicate packet [%d]",pkt_get_seqnum(pkt));
+                stats_packet_duplicated++;
                 continue;
             }
             if(is_in_window(pkt_get_seqnum(pkt))){
                 // Test truncated
-                /*if(rand() % 5 == 0){
+                /*if(rand() % 20 == 0){
                     pkt_set_tr(pkt,1);
                 }*/
                 
                 if(pkt_get_tr(pkt) == 1){
                     send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_NACK);
+                    stats_data_truncated_received++;
                 }
                 else{
                     error = buffer_enqueue(buffer,pkt);
@@ -206,6 +220,20 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     }
 }
 
+int write_stats_in_file(char* filename){
+    FILE *file = fopen(filename,"w");
+    if(file == NULL){
+        return -1;
+    }
+
+    fprintf(file,"data_received:%d\n",stats_data_received);
+    fprintf(file,"data_truncated_received:%d\n",stats_data_truncated_received);
+    fprintf(file,"ack_sent:%d\n",stats_ack_sent);
+    fprintf(file,"nack_sent:%d\n",stats_nack_sent);
+    fprintf(file,"packet_ignored:%d\n",stats_packet_ignored);
+    fprintf(file,"packet_duplicated:%d\n",stats_packet_duplicated);
+    return 0;
+}
 
 // gcc receiver.c -o receiver
 // ./receiver ipv6 port
@@ -282,6 +310,11 @@ int main(int argc, char **argv) {
     }
 
     read_write_loop_receiver(sock,fd);
+
+    int stats_written = write_stats_in_file(stats_filename);
+    if(stats_written != 0){
+        ERROR("Stats writing failed");
+    }
 
     return EXIT_SUCCESS;
 }
