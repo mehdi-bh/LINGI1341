@@ -24,8 +24,8 @@ struct timeval tv;
 int stats_data_sent = 0;
 int stats_ack_received = 0;
 int stats_nack_received = 0;
-int stats_min_rtt = INT_MAX;
-int stats_max_rtt = INT_MIN;
+int stats_min_rtt = 2147483647;
+int stats_max_rtt = 0;
 int rtt[256];
 
 int print_usage(char *prog_name) {
