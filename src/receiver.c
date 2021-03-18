@@ -25,10 +25,12 @@ int print_usage(char *prog_name) {
 }
 
 int window = 31;
-int next_seqnum = 0;
 int last_acked = 0;
 int last_writed = -1;
-int last_received = 0;
+int nb_writed = 0;
+int potentialEOF = 0;
+int lastack_to_send = -2;
+
 int fd = STDOUT_FILENO;
 
 // Stats
@@ -41,16 +43,16 @@ int stats_packet_duplicated = 0;
 
 
 int is_in_window(int seqnum){
+    if(seqnum == last_writed) return 0;
     if(seqnum < last_writed){
-        if(seqnum + MAX_SEQNUM - last_writed < window)
+        if(seqnum + MAX_SEQNUM - last_writed <= window)
             return 1;
         return 0;
     }else{
-        if(seqnum - last_writed <= window)
+        if(seqnum - last_writed < window)
             return 1;
         return 0;
     }
-    
 }
 
 int get_first_oos_seqnum(buffer_t* buffer){
@@ -72,9 +74,9 @@ int get_first_oos_seqnum(buffer_t* buffer){
 
 int write_buffer_to_file(buffer_t* buffer, const int fdOut){
     node_t* current = buffer->first;
-    pkt_t* pkt = current->pkt;
-    buffer_print(buffer,0);
-    while(current != NULL && pkt_get_seqnum(current->pkt) == (last_writed+1)%MAX_SEQNUM){
+    pkt_t* pkt;
+    buffer_print(buffer);
+    while(current != NULL && pkt_get_seqnum(current->pkt) == (last_writed+1)%MAX_SEQNUM ){
         pkt = current->pkt;
         ssize_t writed = write(fdOut,pkt_get_payload(pkt),pkt_get_length(pkt));
         if(writed == -1){
@@ -83,14 +85,15 @@ int write_buffer_to_file(buffer_t* buffer, const int fdOut){
         }
         ERROR("packet %d writed",pkt_get_seqnum(pkt));
         last_writed = pkt_get_seqnum(pkt);
+
         current = current->next;
         pkt = buffer_remove(buffer,pkt_get_seqnum(pkt));
+        nb_writed++;
     }
     return 1;
 }
 
 int send_ack(const int sfd,int seqnum, uint8_t type){
-    printf("ACK TYPE : %d\n",type);
     pkt_t* ack = pkt_new();
     if(!ack){
         ERROR("Can't create ack packet");
@@ -140,24 +143,27 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     struct pollfd *pfds;
     pfds = malloc(sizeof(struct pollfd)*nfds);
     buffer_t* buffer = buffer_init();
+
     int lastack_to_send = -2;
     int ready = -1;
+    srand(time(NULL));
 
-    while(last_acked != lastack_to_send && ready != 0){
+    while(last_acked != lastack_to_send 
+        && ready != 0
+        //&& potentialEOF != 2
+    ){
 
         pfds[0].fd = sfd;
         pfds[0].events = POLLIN;
 
         
-        ready = poll(pfds,nfds,1 * 1000);
-        ERROR("ready %d",ready);
+        ready = poll(pfds,nfds,10 * 1000);
         if(ready == -1){
             ERROR("Poll error");
             return;
         }
         if(ready == 0){
             ERROR("Connection timed out, consider finished");
-            //return;
         }
 
         int error;
@@ -165,16 +171,16 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
         pkt_t* pkt = pkt_new();
         pkt_status_code st;
         char buf[MAX_PKT_SIZE];
-
         if(pfds[0].revents != 0 && pfds[0].revents & POLLIN){
             s = read(pfds[0].fd,buf,MAX_PKT_SIZE);
+            ERROR("%ld bytes readed",s);
             if(s == -1){
-                ERROR("Can't read socket");return;
+                ERROR("Can't read socket");continue;
             }
             st = pkt_decode(buf,s,pkt);
             if(st != PKT_OK || pkt_get_type(pkt) != PTYPE_DATA){
                 stats_packet_ignored++;
-                ERROR("Packet incorrect : %d",st);pkt_del(pkt);return;
+                ERROR("Packet incorrect : %d",st);pkt_del(pkt);continue;
             }
             ERROR("Packet [%d] received",pkt_get_seqnum(pkt));
             stats_data_received += 1;
@@ -185,15 +191,26 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                 stats_packet_duplicated++;
                 continue;
             }
-            if(is_in_window(pkt_get_seqnum(pkt))){
-                // Test truncated
-                /*if(rand() % 20 == 0){
+            if(is_in_window(pkt_get_seqnum(pkt))){                
+                if(rand() % 20 == 0)
                     pkt_set_tr(pkt,1);
-                }*/
-                
+
                 if(pkt_get_tr(pkt) == 1){
-                    send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_NACK);
+                    send_ack(sfd,pkt_get_seqnum(pkt), PTYPE_NACK);
                     stats_data_truncated_received++;
+                }
+                else if(pkt_get_type(pkt) == PTYPE_DATA 
+                        && pkt_get_length(pkt) == 0
+                ){
+
+                    //if(pkt_get_seqnum(pkt) == potentialEOF){
+                    if(pkt_get_seqnum(pkt) == (nb_writed) % MAX_SEQNUM){
+                        ERROR("EOF for sender");
+                        lastack_to_send = pkt_get_seqnum(pkt);
+                    }
+                    //}
+                    // ERROR("Potential EOF [%d]",potentialEOF);
+                    // potentialEOF = pkt_get_seqnum(pkt) ;
                 }
                 else{
                     error = buffer_enqueue(buffer,pkt);
@@ -201,20 +218,16 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                         ERROR("Out of memory while adding to buffer");return;
                     }
 
-                    if(pkt_get_type(pkt) == PTYPE_DATA 
-                        && pkt_get_length(pkt) == 0
-                        && pkt_get_seqnum(pkt) == last_acked){
-                        ERROR("EOF for sender");
-                        lastack_to_send = pkt_get_seqnum(pkt);
-                    }else{
-                        error = write_buffer_to_file(buffer,fdOut);
-                        if(error == -1){
-                            ERROR("Error while writing");
-                            continue;
-                        }
+                    error = write_buffer_to_file(buffer,fdOut);
+                    if(error == -1){
+                        ERROR("Error while writing");
+                        continue;
                     }
-                    send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_ACK);
                 }
+                send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_ACK);
+            }
+            else{
+                ERROR("Packet not in window [%d]",pkt_get_seqnum(pkt));
             }
         }
     }
@@ -274,10 +287,6 @@ int main(int argc, char **argv) {
         return print_usage(argv[0]);
     }
 
-    ASSERT(1 == 1); // Try to change it to see what happens when it fails
-    DEBUG_DUMP("Some bytes", 11); // You can use it with any pointer type
-
-    // This is not an error per-se.
     ERROR("Receiver has following arguments: stats_filename is %s, listen_ip is %s, listen_port is %u",
         stats_filename, listen_ip, listen_port);
 
