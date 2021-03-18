@@ -134,6 +134,8 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     pfds = malloc(sizeof(struct pollfd)*nfds);
     buffer_t* buffer = buffer_init();
     int ready =-1;
+        srand(time(NULL));
+
     while(last_acked != lastack_to_send 
         && ready != 0
         //&& potentialEOF != 2
@@ -174,18 +176,24 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
             }
             if(is_in_window(pkt_get_seqnum(pkt))){
                 
+                if(rand() % 20 == 0)
+                    pkt_set_tr(pkt,1);
+
                 if(pkt_get_tr(pkt) == 1){
                     send_ack(sfd,pkt_get_seqnum(pkt), PTYPE_NACK);
                 }
                 else if(pkt_get_type(pkt) == PTYPE_DATA 
-                        && pkt_get_length(pkt) == 0){
+                        && pkt_get_length(pkt) == 0
+                ){
 
-                    potentialEOF = pkt_get_seqnum(pkt) ;
-                    ERROR("Potential EOF [%d]",potentialEOF);
-                    if(pkt_get_seqnum(pkt) == potentialEOF){
+                    //if(pkt_get_seqnum(pkt) == potentialEOF){
+                    if(pkt_get_seqnum(pkt) == (nb_writed) % MAX_SEQNUM){
                         ERROR("EOF for sender");
                         lastack_to_send = pkt_get_seqnum(pkt);
                     }
+                    //}
+                    // ERROR("Potential EOF [%d]",potentialEOF);
+                    // potentialEOF = pkt_get_seqnum(pkt) ;
                 }
                 else{
                     error = buffer_enqueue(buffer,pkt);
