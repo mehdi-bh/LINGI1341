@@ -12,7 +12,7 @@
 #include "../logs/log.h"
 #include "../packet/packet.h"
 
-#define RTO 1
+#define RTO 2
 
 
 

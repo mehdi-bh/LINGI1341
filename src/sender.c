@@ -158,7 +158,6 @@ void read_write_loop_sender(const int sfd, const int fdIn){
         pfds[1].fd = sfd;
         pfds[1].events = POLLIN | POLLOUT;
 
-        
         ready = poll(pfds,nfds,10 * 1000);
         if(ready == -1){
             ERROR("Poll error");
@@ -262,7 +261,6 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 if(rtt_total > stats_max_rtt) stats_max_rtt = rtt_total;
                 if(rtt_total < stats_min_rtt) stats_min_rtt = rtt_total;
                 
-                // ERROR("Last received %d vs received %d",lastack,ack_received);
                 if(error > 0 || last_ack_to_receive != -1){
                     lastack = ack_received;
                     ack_received = -1;
@@ -276,6 +274,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             }
         }
     }
+    buffer_free(buffer);
 }
 
 int write_stats_in_file(char* filename){
@@ -367,12 +366,6 @@ int main(int argc, char **argv) {
     close(sock);
     close(fd);
 
-    read_write_loop_sender(sock,fd);
-
     write_stats_in_file(stats_filename);
-    /*buffer_t* buffer = buffer_init();
-    int nb = read_file_to_buffer(buffer,fd);
-    printf("%d",nb);
-    buffer_print(buffer,0);*/
     return EXIT_SUCCESS;
 }
