@@ -34,6 +34,14 @@ int lastack_to_send = -2;
 
 int fd = STDOUT_FILENO;
 
+// Stats
+int stats_data_received = 0;
+int stats_data_truncated_received = 0;
+int stats_ack_sent = 0;
+int stats_nack_sent = 0;
+int stats_packet_ignored = 0;
+int stats_packet_duplicated = 0;
+
 
 int is_in_window(int seqnum){
     if(seqnum == last_writed) return 0;
@@ -100,10 +108,12 @@ int send_ack(const int sfd,int seqnum, uint8_t type,int wind){
     }
     if(type == PTYPE_ACK){
         last_acked = seqnum;
-        ERROR("ack %d sended\n",seqnum);
+        ERROR("ack %d sended",seqnum);
+        stats_ack_sent++;
     }
     else{
-        ERROR("nack %d sended\n",seqnum);
+        ERROR("nack %d sended",seqnum);
+        stats_nack_sent++;
     }
 
 
@@ -165,10 +175,14 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
             st = pkt_decode(buf,s,pkt);
             if(st != PKT_OK || pkt_get_type(pkt) != PTYPE_DATA){
                 ERROR("Packet incorrect : %d",st);pkt_del(pkt);bypass=1;
+                stats_packet_ignored++;
             }else{
                 ERROR("Packet [%d] received, nb writed [%d], window [%d]",pkt_get_seqnum(pkt),nb_writed,window);
+                stats_data_received += 1;
+
                 if(is_in_buffer(buffer,pkt_get_seqnum(pkt))){ 
                     ERROR("Duplicate packet [%d]",pkt_get_seqnum(pkt));bypass=1;
+                    stats_data_truncated_received++;
                 }
                 else if(is_in_window(pkt_get_seqnum(pkt))){
                     
@@ -214,6 +228,20 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     }
 }
 
+int write_stats_in_file(char* filename){
+    FILE *file = fopen(filename,"w");
+    if(file == NULL){
+        return -1;
+    }
+
+    fprintf(file,"data_received:%d\n",stats_data_received);
+    fprintf(file,"data_truncated_received:%d\n",stats_data_truncated_received);
+    fprintf(file,"ack_sent:%d\n",stats_ack_sent);
+    fprintf(file,"nack_sent:%d\n",stats_nack_sent);
+    fprintf(file,"packet_ignored:%d\n",stats_packet_ignored);
+    fprintf(file,"packet_duplicated:%d\n",stats_packet_duplicated);
+    return 0;
+}
 
 // gcc receiver.c -o receiver
 // ./receiver ipv6 port
@@ -286,6 +314,11 @@ int main(int argc, char **argv) {
     }
 
     read_write_loop_receiver(sock,fd);
+
+    int stats_written = write_stats_in_file(stats_filename);
+    if(stats_written != 0){
+        ERROR("Stats writing failed");
+    }
 
     return EXIT_SUCCESS;
 }

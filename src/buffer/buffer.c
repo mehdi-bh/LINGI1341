@@ -34,7 +34,6 @@ int buffer_enqueue(buffer_t *buffer, pkt_t *pkt) {
 
         }
         else{
-            //int cpt = 0;
             while(pkt_seqnum < pkt_get_seqnum(current->pkt) 
                 && !(pkt_get_seqnum(current->pkt) > 205  && pkt_seqnum < 50)){
                 current = current->prev;
