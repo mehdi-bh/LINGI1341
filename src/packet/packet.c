@@ -373,15 +373,15 @@ ssize_t predict_header_length(const pkt_t *pkt)
 }
 
 void pkt_print(pkt_t* pkt){
-	printf("
-    type: %d\n
-    truncated: %d\n
-    window: %d\n
-    length: %d\n
-    seqnum %d\n
-    timestamp: %d\n
-    crc1: %d\n
-    payload: %s\n
+	printf("\
+    type: %d\n\
+    truncated: %d\n\
+    window: %d\n\
+    length: %d\n\
+    seqnum %d\n\
+    timestamp: %d\n\
+    crc1: %d\n\
+    payload: %s\n\
     ",
     pkt->type,
     pkt->tr,
