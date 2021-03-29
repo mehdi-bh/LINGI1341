@@ -1,6 +1,6 @@
 data_sent:15
 ack_received:3
 nack_received:0
-min_rtt:0.108431
-max_rtt:188.442464
-total_time:0.746770
+min_rtt:0.283701
+max_rtt:0.349035
+total_time:0.834584

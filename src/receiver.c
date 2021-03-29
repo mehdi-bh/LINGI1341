@@ -181,12 +181,8 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     int reset_time = 1;
     int n_accumulated = 0;
     int bypass = 0;
-//    int highest_seqnum = -1;
-    //srand(time(NULL));
 
-    while(last_acked != lastack_to_send 
-        && ready != 0
-        //&& potentialEOF != 2
+    while(last_acked != lastack_to_send && ready != 0
     ){
 
         pfds[0].fd = sfd;
@@ -213,7 +209,6 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
             if(s == -1){
                 ERROR("Can't read socket");
             }
-
             if(reset_time){
                 clock_gettime(CLOCK_MONOTONIC_RAW,&start);
                 reset_time = 0;
@@ -239,11 +234,9 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                         continue;
                     }
                     else if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0){
-                        //if(pkt_get_seqnum(pkt) == (nb_writed) % MAX_SEQNUM){
-                            ERROR("EOF for sender");
-                            lastack_to_send = pkt_get_seqnum(pkt);
-                            bypass=1;
-                        //}
+                        ERROR("EOF for sender");
+                        lastack_to_send = pkt_get_seqnum(pkt);
+                        bypass=1;
                     }
                     else{
                         error = buffer_enqueue(buffer,pkt);
@@ -256,7 +249,6 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
                         error = write_buffer_to_file(buffer,fdOut);
                         if(error == -1){
                             ERROR("Error while writing");
-                            //continue;
                         }
                         if(window > MAX_WINDOW) window = MAX_WINDOW;
                     }

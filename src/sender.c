@@ -14,7 +14,6 @@
 uint8_t RTO = 1;
 
 int window = 1;
-//receiver window
 int fd = STDIN_FILENO;
 int seqnum = 0;
 int lastack = -1;
@@ -22,7 +21,6 @@ int nb_sended = 0;
 uint8_t nextSeqnum;
 struct timeval tv;
 
-// Stats
 int stats_data_sent = 0;
 int stats_ack_received = 0;
 int stats_nack_received = 0;
@@ -46,6 +44,23 @@ int is_in_window(int seqnum_to_test){
             return 1;
         return 0;
     }
+}
+
+struct timespec diff(struct timespec start, struct timespec end)
+{
+    struct timespec temp;
+
+    if ((end.tv_nsec-start.tv_nsec) < 0)
+    {
+            temp.tv_sec = end.tv_sec-start.tv_sec-1;
+            temp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
+    }
+    else 
+    {
+            temp.tv_sec = end.tv_sec-start.tv_sec;
+            temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+    }
+    return temp;
 }
 
 /*
@@ -210,10 +225,8 @@ void read_write_loop_sender(const int sfd, const int fdIn){
     pkt_t* pkt_to;
     char buf[MAX_PKT_SIZE];
     char buf_ack[ACK_SIZE];
-    //size_t len;
     ssize_t readed;
     buffer_t* buffer = buffer_init();
-    // pkt_status_code st;
 
     int pkt_tr = -1;
     int EOF_ACKED = 0;
@@ -326,13 +339,16 @@ void read_write_loop_sender(const int sfd, const int fdIn){
 
 
                 stats_ack_received++;
-                struct timespec now;
-                clock_gettime(CLOCK_REALTIME,&now);
-                int rtt_total = now.tv_nsec - rtt[pkt_get_seqnum(pkt)].tv_nsec;
-                double rtt_ms = rtt_total / 1.0e6;
-                if(rtt_ms > stats_max_rtt) stats_max_rtt = rtt_ms;
-                if(rtt_ms < stats_min_rtt) stats_min_rtt = rtt_ms;
-                
+
+                if(rtt[pkt_get_seqnum(pkt)].tv_nsec != 0){
+                    struct timespec now;
+                    clock_gettime(CLOCK_REALTIME,&now);
+                    struct timespec total = diff(rtt[pkt_get_seqnum(pkt)],now);
+                    double rtt_ms = total.tv_nsec / 1.0e6;
+                    if(rtt_ms > stats_max_rtt) stats_max_rtt = rtt_ms;
+                    if(rtt_ms < stats_min_rtt) stats_min_rtt = rtt_ms;
+                }
+
                 if(error > 0 || last_ack_to_receive != -1){
                     lastack = ack_received;
                     ack_received = -1;
@@ -410,8 +426,8 @@ int main(int argc, char **argv) {
         return print_usage(argv[0]);
     }
 
-    ASSERT(1 == 1); // Try to change it to see what happens when it fails
-    DEBUG_DUMP("Some bytes", 12); // You can use it with any pointer type
+    ASSERT(1 == 1);
+    DEBUG_DUMP("Some bytes", 12);
     
     ERROR("Sender has following arguments: filename is %s, stats_filename is %s, receiver_ip is %s, receiver_port is %u",
         filename, stats_filename, receiver_ip, receiver_port);
@@ -450,8 +466,8 @@ int main(int argc, char **argv) {
     close(fd);
 
     clock_gettime(CLOCK_REALTIME,&end);
-    int total_time = end.tv_nsec - start.tv_nsec;
-    stats_total_time = total_time / 1.0e6;
+    struct timespec total_time = diff(start, end);
+    stats_total_time = total_time.tv_nsec / 1.0e6;
 
     write_stats_in_file(stats_filename);
 
