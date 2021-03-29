@@ -131,10 +131,9 @@ int send_pkt(const int sfd,pkt_t* pkt,char* buf){
         return error;
     }
     stats_data_sent++;
-    clock_gettime(CLOCK_MONOTONIC_RAW,&rtt[pkt_get_seqnum(pkt)]);
+    clock_gettime(CLOCK_REALTIME,&rtt[pkt_get_seqnum(pkt)]);
     ERROR("Packet [%d] sent",pkt_get_seqnum(pkt));
     return st;
-
 }
 
 /*
@@ -280,7 +279,7 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 fprintf(stderr,"\n");
                 stats_ack_received++;
                 struct timespec now;
-                clock_gettime(CLOCK_MONOTONIC_RAW,&now);
+                clock_gettime(CLOCK_REALTIME,&now);
                 int rtt_total = now.tv_nsec - rtt[pkt_get_seqnum(pkt)].tv_nsec;
                 double rtt_ms = rtt_total / 1.0e6;
                 if(rtt_ms > stats_max_rtt) stats_max_rtt = rtt_ms;
@@ -395,14 +394,14 @@ int main(int argc, char **argv) {
     }
 
     struct timespec start,end;
-    clock_gettime(CLOCK_MONOTONIC_RAW,&start);
+    clock_gettime(CLOCK_REALTIME,&start);
 
     read_write_loop_sender(sock,fd);
 
     close(sock);
     close(fd);
 
-    clock_gettime(CLOCK_MONOTONIC_RAW,&end);
+    clock_gettime(CLOCK_REALTIME,&end);
     int total_time = end.tv_nsec - start.tv_nsec;
     stats_total_time = total_time / 1.0e6;
 
