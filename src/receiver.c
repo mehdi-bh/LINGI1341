@@ -34,7 +34,6 @@ int lastack_to_send = -2;
 
 int fd = STDOUT_FILENO;
 
-// Stats
 int stats_data_received = 0;
 int stats_data_truncated_received = 0;
 int stats_ack_sent = 0;
@@ -43,6 +42,16 @@ int stats_packet_ignored = 0;
 int stats_packet_duplicated = 0;
 
 
+/*
+ * Function:  is_in_window
+ * -------------------------
+ * Checks that the seqnum of a packet received 
+ * is in the receiving window.
+ *
+ * @seqnum: (int) The seqnum of the packet we want to check.
+ * @return: 1 The seqnum is in window.
+ *          0 The seqnum is not in window.
+ */
 int is_in_window(int seqnum){
     if(seqnum == last_writed) return 0;
     if(seqnum < last_writed){
@@ -56,6 +65,20 @@ int is_in_window(int seqnum){
     }
 }
 
+/*
+ * Function:  write_buffer_to_file
+ * -------------------------------
+ * The receiving buffer is written in the file during the execution of the 
+ * receiver. When the receiver receives packets without problem, he writes them
+ * directly in the file, when the receiver receives some packets but a packet is missing,
+ * he will wait to receive this packet and then write all the packets that are in order and
+ * completes. 
+ *
+ * @buffer: The buffer we want to write the packets from.
+ * @fdOut:  The file in which we want to write.
+ * @return: 1 if everything worked successfully.
+ *         -1 if an error occurred.
+ */
 int write_buffer_to_file(buffer_t* buffer, const int fdOut){
     node_t* current = buffer->first;
     pkt_t* pkt;
@@ -71,13 +94,26 @@ int write_buffer_to_file(buffer_t* buffer, const int fdOut){
         last_writed = pkt_get_seqnum(pkt);
 
         current = current->next;
-        pkt = buffer_remove(buffer,pkt_get_seqnum(pkt));
-        // window++;    
+        pkt = buffer_remove(buffer,pkt_get_seqnum(pkt));  
         nb_writed++;
     }
     return 1;
 }
 
+/*
+ * Function:  send_ack
+ * -------------------
+ * This function sends an acknowledgement to the sender, it holds
+ * the ACK and the NACK types.
+ *
+ * @sfd: Socket file descriptor on which the receiver can send.
+ * @seqnum:  Seqnum of the acknowledgement
+ * @type: ACK or NACK
+ * @wind: Size of the window, which means the remaining space
+ * in buffer considering the window.
+ * @return: 0 if everything worked successfully.
+ *         -1 if an error occurred.
+ */
 int send_ack(const int sfd,int seqnum, uint8_t type,int wind){
     pkt_t* ack = pkt_new();
     if(!ack){
@@ -120,8 +156,19 @@ int send_ack(const int sfd,int seqnum, uint8_t type,int wind){
     return 0;
 }
 
-
-
+/*
+ * Function:  read_write_loop_receiver
+ * -----------------------------------
+ * This function is the most important one for the receiver.
+ * It reads the packets from the sender on the socket and sends acknowledgements while
+ * writing into the output file. All that implementing the selective repeat and sending
+ * cumulative acknowledgements to not overload the network. It also recognizes truncated
+ * packets and asks a resend from the sender for these cases.
+ *
+ * @sfd: Socket file descriptor to communicate with the sender.
+ * @fdOut: File descriptor of the output file received.
+ * @return: void
+ */
 void read_write_loop_receiver(const int sfd,const int fdOut){
 
     int nfds = 1;
@@ -228,6 +275,16 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     }
 }
 
+/*
+ * Function:  write_stats_in_file
+ * ------------------------------
+ * This functions writes all the stats of the file transfer into
+ * a specified file.
+ *
+ * @filename: Name of the file in which we write the stats
+ * @return: 0 if everything worked successfully.
+ *         -1 if an error occurred.
+ */
 int write_stats_in_file(char* filename){
     FILE *file = fopen(filename,"w");
     if(file == NULL){
@@ -243,9 +300,6 @@ int write_stats_in_file(char* filename){
     return 0;
 }
 
-// gcc receiver.c -o receiver
-// ./receiver ipv6 port
-// 2a02:2788:1a4:552:eee9:bbda:b6d0:4e08
 int main(int argc, char **argv) {
     int opt;
 
