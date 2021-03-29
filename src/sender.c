@@ -11,7 +11,7 @@
 #define MAX_SEQNUM 256
 #define HEADER_SIZE 16
 
-uint8_t RTO = 1;
+uint8_t RTO = 2;
 
 int window = 1;
 int fd = STDIN_FILENO;
