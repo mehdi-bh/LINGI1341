@@ -9,10 +9,10 @@
 #define BUFF_LEN 
 #define ACK_SIZE 10
 #define MAX_SEQNUM 256
+#define HEADER_SIZE 16
 
 int window = 1;
 //receiver window
-int window_r = 31;
 int fd = STDIN_FILENO;
 int seqnum = 0;
 int lastack = -1;
@@ -64,12 +64,12 @@ pkt_t* read_file(buffer_t* buffer, int fd){
         return NULL;
     }
 
-    time_t now = time(NULL);
+    // time_t now = time(NULL);
 
     char paylaod[MAX_PAYLOAD_SIZE];
-    ssize_t readed = read(fd,paylaod,MAX_PAYLOAD_SIZE);
+    ssize_t len = read(fd,paylaod,MAX_PAYLOAD_SIZE);
 
-    if(readed == -1){
+    if(len == -1){
         ERROR("Can't read data in file");
         return NULL;
     }
@@ -81,12 +81,13 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     pkt_status_code err = pkt_set_type(pkt,PTYPE_DATA);
     err = pkt_set_tr(pkt,0);
     err = pkt_set_window(pkt,window);
-    err = pkt_set_timestamp(pkt,(uint32_t)now);
+    // err = pkt_set_timestamp(pkt,(uint32_t)now);
+    err = pkt_set_timestamp(pkt,0);
     err = pkt_set_seqnum(pkt,seqnum);
-    if(readed == 0){
+    if(len == 0){
         err = pkt_set_length(pkt,0);
     }else{
-        err = pkt_set_payload(pkt,paylaod,readed);
+        err = pkt_set_payload(pkt,paylaod,len);
         seqnum = (seqnum + 1) % MAX_SEQNUM;
         nb_sended++;
     }
@@ -101,55 +102,30 @@ pkt_t* read_file(buffer_t* buffer, int fd){
     return pkt;
 }
 
-// int read_file_to_buffer(buffer_t* buffer, int fd){
-//     if(!buffer){
-//         ERROR("Buffer is null");
-//         return 0;
-//     }
+int send_pkt(const int sfd,pkt_t* pkt,char* buf){
+    size_t len;
 
-//     if(buffer->size > window){
-//         ERROR("Buffer is full");
-//         return -1;
-//     }
+    time_t now = time(NULL);
 
-//     int nbPackets = 0;
-//     ssize_t datas;
+    pkt_status_code st;
+    st = pkt_set_timestamp(pkt,(uint32_t)now);
 
-//     while(buffer->size < window && datas > 0 ){
-//         char payload[MAX_PAYLOAD_SIZE];
-//         datas = read(fd,payload,MAX_PAYLOAD_SIZE);
-//         if(datas == -1){
-//             ERROR("Can't read data in file");
-//             return 0;
-//         }
+    st = pkt_encode(pkt,buf,&len);
+    if(st){
+        pkt_del(pkt);
+        ERROR("Error while encoding packet : %d",st);
+        return st;
+    }
+    
+    ssize_t error = send(sfd,buf,len,0);
+    if(error == -1){
+        ERROR("ERROR while sending packet : %d",pkt_get_seqnum(pkt));
+        return error;
+    }
+    ERROR("Packet [%d] sended",pkt_get_seqnum(pkt));
+    return st;
 
-//         pkt_t* pkt = pkt_new();
-//         if(!pkt){
-//             ERROR("Can't create packet");
-//             return 0;
-//         }
-
-//         pkt_status_code err;
-//         err = pkt_set_type(pkt,PTYPE_DATA);
-//         err = pkt_set_tr(pkt,0);
-//         if(datas == 0){
-//             err = pkt_set_seqnum(pkt,seqnum);
-//             err = pkt_set_length(pkt,0);
-//         }else{
-//             err = pkt_set_seqnum(pkt,(seqnum++ % 256));
-//             err = pkt_set_payload(pkt,payload,datas);
-//         }        
-//         if(err){
-//             ERROR("Can't set data to the packet : %d",err);
-//             pkt_del(pkt);
-//             return 0;
-//         }
-
-//         buffer_enqueue(buffer,pkt);
-//         nbPackets++;
-//     }
-//     return nbPackets;
-// }
+}
 
 
 void read_write_loop_sender(const int sfd, const int fdIn){
@@ -164,21 +140,23 @@ void read_write_loop_sender(const int sfd, const int fdIn){
     pkt_t* pkt_to;
     char buf[MAX_PKT_SIZE];
     char buf_ack[ACK_SIZE];
-    size_t len;
+    //size_t len;
     ssize_t readed;
     buffer_t* buffer = buffer_init();
+    // pkt_status_code st;
 
-    pkt_status_code st;        
+    int pkt_tr = -1;
     int EOF_ACKED = 0;
     int ready = -1;
     int nb_last_ack_to = 0;
+    int ack_received = -1;
 
-    while(EOF_ACKED != 2 && ready != 0){
+    while(EOF_ACKED != 1 && ready != 0){
 
         pfds[0].fd = fdIn;
         pfds[0].events = POLLIN;
         pfds[1].fd = sfd;
-        pfds[1].events = POLLIN;
+        pfds[1].events = POLLIN | POLLOUT;
 
         
         ready = poll(pfds,nfds,10 * 1000);
@@ -190,9 +168,37 @@ void read_write_loop_sender(const int sfd, const int fdIn){
             ERROR("Connection timed out");
         }
 
-
-        if(pfds[0].revents != 0 && pfds[0].revents & POLLIN ){
+        if(pfds[0].revents != 0 && pfds[0].revents & POLLIN){
             
+            pkt = read_file(buffer,fdIn);
+            if(pkt && last_ack_to_receive == -1){
+
+                if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
+                    last_ack_to_receive = seqnum;
+                    ERROR("last_ack_to_receive = %d\n",seqnum);
+                }
+                
+                buffer_enqueue(buffer,pkt);
+                ERROR("add : ");fflush(stdout);buffer_print(buffer);
+
+                //st = send_pkt(sfd,pkt,buf);
+            }
+        }
+        if(pfds[1].revents != 0 && pfds[1].revents & POLLOUT){
+            if(ack_received != -1){
+                ERROR("Need to resend [%d]",ack_received);
+                pkt_to = buffer_get_pkt(buffer,ack_received);
+                send_pkt(sfd,pkt_to,buf);
+                ack_received = -1;
+            }
+            if(pkt_tr != -1){
+                pkt_t* resend = pkt_new();
+                resend = buffer_get_pkt(buffer,pkt_tr);
+
+                ERROR("Truncated pkt sended");
+                send_pkt(sfd,resend,buf);
+                pkt_tr = -1;
+            }
             pkt_to = look_for_timedout_packet(buffer);
             if(pkt_to){
                 if(pkt_get_seqnum(pkt_to) == last_ack_to_receive){
@@ -202,55 +208,12 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                         break;
                     }
                 }
-                st = pkt_encode(pkt_to,buf,&len);
-                    
-                if(st){
-                    pkt_del(pkt_to);
-                    ERROR("Error while encoding packet : %d",st);
-                    continue;
-                }
-                
-                error = send(sfd,buf,len,0);
-                if(error == -1){
-                    ERROR("ERROR while sending timed out packet : %d",pkt_get_timestamp(pkt_to));
-                }
-                rtt[pkt_get_seqnum(pkt_to)] = time(NULL);
-                stats_data_sent++;
-                ERROR("Packet timed out [%d] re sended",pkt_get_seqnum(pkt_to));
+                send_pkt(sfd,pkt_to,buf);
+            }
+            if((pkt_to = look_for_unsended_packet(buffer))){
+                send_pkt(sfd,pkt_to,buf);
             }
             
-            pkt = read_file(buffer,fdIn);
-            if(pkt && last_ack_to_receive == -1){
-                if(pkt_get_length(pkt) == 0 && pkt_get_seqnum(pkt) == seqnum){
-                    last_ack_to_receive = seqnum;
-                    ERROR("last_ack_to_receive = %d\n",seqnum);
-                }
-                buffer_enqueue(buffer,pkt);
-                ERROR("add : ");fflush(stdout);buffer_print(buffer);
-                // Test truncated
-                /*if(seqnum % 5 != 0){
-                    pkt_set_tr(pkt,1);
-                }*/
-                st = pkt_encode(pkt,buf,&len);
-                
-                if(st){
-                    pkt_del(pkt);
-                    ERROR("Error while encoding packet : %d",st);
-                    continue;
-                }
-                rtt[pkt_get_seqnum(pkt)] = time(NULL);
-                stats_data_sent++;
-                
-                ERROR("Send the packet [%d]",pkt_get_seqnum(pkt));
-                //ERROR("don't send packed %d : %d",seqnum,seqnum%5==0);
-                //if(seqnum % 5 != 0) 
-                error = send(sfd,buf,len,0);
-                ERROR("%d bytes sended\n",error);
-                if(error == -1){
-                    ERROR("ERROR while sending packet : %d",seqnum);
-                }
-            
-            }
         }
         if(pfds[1].revents != 0 && pfds[1].revents & POLLIN){
             readed = read(sfd,buf_ack,ACK_SIZE);
@@ -273,38 +236,20 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 continue;
             }
             //Black magic condition
-            if(pkt_get_seqnum(pkt) > nb_sended+1 % MAX_SEQNUM){
-                //buffer_get_pkt(buffer,pkt_get_seqnum(pkt)-(1-pkt_get_tr(pkt)) ) == NULL && (last_ack_to_receive == pkt_get_seqnum(pkt))){
+            if(pkt_get_seqnum(pkt) > nb_sended+1 % MAX_SEQNUM
+                ||(last_ack_to_receive != -1 && pkt_get_seqnum(pkt) > last_ack_to_receive)){
                 ERROR("Ack [%d] invalid",pkt_get_seqnum(pkt));
                 pkt_del(pkt);
                 continue;
             }
             if(pkt_get_type(pkt) == PTYPE_NACK){
                 ERROR("Packed [%d] was truncated",pkt_get_seqnum(pkt));
-                //pkt_del(pkt);
-                // continue;
-                pkt_t* resend = pkt_new();
-                resend = buffer_get_pkt(buffer,pkt_get_seqnum(pkt));
-//                pkt_print(resend);
-                st = pkt_encode(resend,buf,&len);  
-                if(st){
-                    pkt_del(pkt);
-                    ERROR("Error while encoding packet : %d",st);
-                    continue;
-                }
-                
-                ERROR("Send directly the truncated [%d] packet\n",seqnum);
-                error = send(sfd,buf,len,0);
-                if(error == -1){
-                    ERROR("ERROR while sending packet : %d",seqnum);
-                }
-                rtt[pkt_get_seqnum(pkt)] = time(NULL);
-                stats_data_sent++;
-                stats_nack_received++;
+                pkt_tr = pkt_get_seqnum(pkt);
+
             }
             else{
                 window = pkt_get_window(pkt);
-                int ack_received = pkt_get_seqnum(pkt);
+                ack_received = pkt_get_seqnum(pkt);
 
                 error = buffer_remove_acked(buffer,ack_received);
                 ERROR("ack %d received, %d pkt removed",ack_received,error);
@@ -319,7 +264,9 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 
                 // ERROR("Last received %d vs received %d",lastack,ack_received);
                 if(error > 0 || last_ack_to_receive != -1){
-                lastack = ack_received;
+                    lastack = ack_received;
+                    ack_received = -1;
+
                     if(lastack == last_ack_to_receive){
                         ERROR("Reached the EOF");
                         pkt_del(pkt);

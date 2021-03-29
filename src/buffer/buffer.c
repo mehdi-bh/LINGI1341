@@ -149,7 +149,9 @@ int buffer_remove_acked(buffer_t *buffer, uint8_t seqnum) {
     if(buffer->size == 0) {
         return 0;
     }
-
+    if(!is_in_buffer(buffer,seqnum)){
+        return 0;
+    }
     int count = 0;
 
     while(seqnum != pkt_get_seqnum(buffer->first->pkt)) {
@@ -215,9 +217,30 @@ pkt_t* look_for_timedout_packet(buffer_t* buffer){
     uint32_t now_s;
     for(int i = 0 ; i < (int)buffer->size ; i++){
         now_s = (uint32_t) time(NULL);
-        if(now_s - pkt_get_timestamp(cur->pkt) > RTO ){
+        if(
+            pkt_get_timestamp(cur->pkt) != 0 &&
+         now_s - pkt_get_timestamp(cur->pkt) > RTO ){
             ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
             pkt_set_timestamp(cur->pkt,now_s);
+            return cur->pkt;
+        }
+        cur = cur->next;
+    }
+    return NULL;
+}
+
+pkt_t* look_for_unsended_packet(buffer_t* buffer){
+    pkt_t* pkt = NULL;
+    if(!buffer){
+        ERROR("Buffer is null");
+        return pkt;
+    }
+    if(buffer->size == 0){
+        return pkt;
+    }
+    node_t* cur = buffer->first;
+    for(int i = 0 ; i < (int)buffer->size ; i++){
+        if(pkt_get_timestamp(cur->pkt) == 0 ){
             return cur->pkt;
         }
         cur = cur->next;
