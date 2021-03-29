@@ -186,7 +186,6 @@ pkt_t* look_for_timedout_packet(buffer_t* buffer){
         return pkt;
     }
     if(buffer->size == 0){
-        //ERROR("No timed out packet buffer is empty");
         return pkt;
     }
     node_t* cur = buffer->first;
@@ -195,7 +194,7 @@ pkt_t* look_for_timedout_packet(buffer_t* buffer){
         now_s = (uint32_t) time(NULL);
         if(
             pkt_get_timestamp(cur->pkt) != 0 &&
-         now_s - pkt_get_timestamp(cur->pkt) > RTO ){
+            now_s - pkt_get_timestamp(cur->pkt) > RTO ){
             ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
             pkt_set_timestamp(cur->pkt,now_s);
             return cur->pkt;
