@@ -12,7 +12,6 @@
 #include "../logs/log.h"
 #include "../packet/packet.h"
 
-#define RTO 2
 
 typedef struct node {
     struct node *next;
@@ -99,19 +98,6 @@ int buffer_remove_acked(buffer_t* buffer, uint8_t seqnum);
  */
 pkt_t* buffer_get_pkt(buffer_t* buffer, uint8_t seqnum);
 
-/*
- * Function:  look_for_timedout_packet
- * -----------------------------------
- * Scans the buffer looking for packets that have timed out. 
- * By computing (now - timestamp(pkt) > RTO)
- * which means that the packet is expired
- * and returns it.
- *
- * @buffer: The buffer in which we want to find a timed out packet
- * @return: (pkt_t) if found, a timed out packet, the oldest.
- *          (NULL)  if no timed out packet has been found or an error occured.
- */
-pkt_t* look_for_timedout_packet(buffer_t* buffer);
 
 /*
  * Function:  look_for_unsent_packet

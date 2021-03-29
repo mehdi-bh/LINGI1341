@@ -11,6 +11,8 @@
 #define MAX_SEQNUM 256
 #define HEADER_SIZE 16
 
+uint8_t RTO = 1;
+
 int window = 1;
 //receiver window
 int fd = STDIN_FILENO;
@@ -134,6 +136,49 @@ int send_pkt(const int sfd,pkt_t* pkt,char* buf){
     clock_gettime(CLOCK_REALTIME,&rtt[pkt_get_seqnum(pkt)]);
     ERROR("Packet [%d] sent",pkt_get_seqnum(pkt));
     return st;
+}
+
+/*
+ * Function:  look_for_timedout_packet
+ * -----------------------------------
+ * Scans the buffer looking for packets that have timed out. 
+ * By computing (now - timestamp(pkt) > RTO)
+ * which means that the packet is expired
+ * and returns it.
+ *
+ * @buffer: The buffer in which we want to find a timed out packet
+ * @return: (pkt_t) if found, a timed out packet, the oldest.
+ *          (NULL)  if no timed out packet has been found or an error occured.
+ */
+pkt_t* look_for_timedout_packet(buffer_t* buffer){
+    pkt_t* pkt = NULL;
+    if(!buffer){
+        ERROR("Buffer is null");
+        return pkt;
+    }
+    if(buffer->size == 0){
+        return pkt;
+    }
+    node_t* cur = buffer->first;
+    uint32_t now_s;
+    int found = 0;
+    for(int i = 0 ; i < (int)buffer->size ; i++){
+        now_s = (uint32_t) time(NULL);
+        if(pkt_get_timestamp(cur->pkt) != 0 &&
+         now_s - pkt_get_timestamp(cur->pkt) > RTO ){
+            if(!found){
+                ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
+                pkt_set_timestamp(cur->pkt,now_s);
+                pkt = cur->pkt;
+                found = 1;
+            }
+            else{
+                pkt_set_timestamp(cur->pkt,now_s - RTO/2);
+            }
+        }
+        cur = cur->next;
+    }
+    return pkt;
 }
 
 /*
@@ -277,6 +322,9 @@ void read_write_loop_sender(const int sfd, const int fdIn){
                 ERROR("remove : ");fflush(stdout);
                 buffer_print(buffer);
                 fprintf(stderr,"\n");
+
+
+
                 stats_ack_received++;
                 struct timespec now;
                 clock_gettime(CLOCK_REALTIME,&now);
