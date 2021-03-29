@@ -1,711 +1,371 @@
 [91m[ERROR] Sender has following arguments: filename is (null), stats_filename is (null), receiver_ip is ::1, receiver_port is 1341[0m
 [91m[ERROR] add : [0m
 0 -> END 1
-[91m[ERROR] Packet [0] sended[0m
+[91m[ERROR] Packet [0] sent[0m
+[91m[ERROR] ack 1 received, 0 pkt removed[0m
+[91m[ERROR] remove : [0m
+0 -> END 1
+
 [91m[ERROR] add : [0m
 0 -> 1 -> END 2
-[91m[ERROR] Packet [1] sended[0m
-[91m[ERROR] ack 1 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-1 -> END 1
-
+[91m[ERROR] Need to resend [1][0m
+[91m[ERROR] Packet [1] sent[0m
 [91m[ERROR] add : [0m
-1 -> 2 -> END 2
-[91m[ERROR] Packet [2] sended[0m
+0 -> 1 -> 2 -> END 3
+[91m[ERROR] Packet [2] sent[0m
 [91m[ERROR] add : [0m
-1 -> 2 -> 3 -> END 3
-[91m[ERROR] Packet [3] sended[0m
-[91m[ERROR] ack 2 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-2 -> 3 -> END 2
-
+0 -> 1 -> 2 -> 3 -> END 4
+[91m[ERROR] Packet [3] sent[0m
 [91m[ERROR] add : [0m
-2 -> 3 -> 4 -> END 3
-[91m[ERROR] Packet [4] sended[0m
-[91m[ERROR] ack 3 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-3 -> 4 -> END 2
-
+0 -> 1 -> 2 -> 3 -> 4 -> END 5
+[91m[ERROR] Packet [4] sent[0m
 [91m[ERROR] add : [0m
-3 -> 4 -> 5 -> END 3
-[91m[ERROR] Packet [5] sended[0m
-[91m[ERROR] ack 4 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-4 -> 5 -> END 2
-
+0 -> 1 -> 2 -> 3 -> 4 -> 5 -> END 6
+[91m[ERROR] Packet [5] sent[0m
 [91m[ERROR] add : [0m
-4 -> 5 -> 6 -> END 3
-[91m[ERROR] Packet [6] sended[0m
-[91m[ERROR] ack 5 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-5 -> 6 -> END 2
-
+0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> END 7
+[91m[ERROR] Packet [6] sent[0m
 [91m[ERROR] add : [0m
-5 -> 6 -> 7 -> END 3
-[91m[ERROR] Packet [7] sended[0m
-[91m[ERROR] ack 6 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-6 -> 7 -> END 2
-
+0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> END 8
+[91m[ERROR] Packet [7] sent[0m
 [91m[ERROR] add : [0m
-6 -> 7 -> 8 -> END 3
-[91m[ERROR] Packet [8] sended[0m
-[91m[ERROR] ack 7 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-7 -> 8 -> END 2
-
+0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> END 9
+[91m[ERROR] Packet [8] sent[0m
 [91m[ERROR] add : [0m
-7 -> 8 -> 9 -> END 3
-[91m[ERROR] Packet [9] sended[0m
-[91m[ERROR] ack 8 received, 1 pkt removed[0m
+0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> END 10
+[91m[ERROR] Packet [9] sent[0m
+[91m[ERROR] ack 8 received, 8 pkt removed[0m
 [91m[ERROR] remove : [0m
 8 -> 9 -> END 2
 
 [91m[ERROR] add : [0m
 8 -> 9 -> 10 -> END 3
-[91m[ERROR] Packet [10] sended[0m
-[91m[ERROR] ack 9 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-9 -> 10 -> END 2
-
+[91m[ERROR] Packet [10] sent[0m
 [91m[ERROR] add : [0m
-9 -> 10 -> 11 -> END 3
-[91m[ERROR] Packet [11] sended[0m
-[91m[ERROR] ack 10 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-10 -> 11 -> END 2
-
+8 -> 9 -> 10 -> 11 -> END 4
+[91m[ERROR] Packet [11] sent[0m
 [91m[ERROR] add : [0m
-10 -> 11 -> 12 -> END 3
-[91m[ERROR] Packet [12] sended[0m
-[91m[ERROR] ack 11 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-11 -> 12 -> END 2
-
+8 -> 9 -> 10 -> 11 -> 12 -> END 5
+[91m[ERROR] Packet [12] sent[0m
 [91m[ERROR] add : [0m
-11 -> 12 -> 13 -> END 3
-[91m[ERROR] Packet [13] sended[0m
-[91m[ERROR] ack 12 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-12 -> 13 -> END 2
-
+8 -> 9 -> 10 -> 11 -> 12 -> 13 -> END 6
+[91m[ERROR] Packet [13] sent[0m
 [91m[ERROR] add : [0m
-12 -> 13 -> 14 -> END 3
-[91m[ERROR] Packet [14] sended[0m
-[91m[ERROR] ack 13 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-13 -> 14 -> END 2
-
+8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> END 7
+[91m[ERROR] Packet [14] sent[0m
 [91m[ERROR] add : [0m
-13 -> 14 -> 15 -> END 3
-[91m[ERROR] Packet [15] sended[0m
-[91m[ERROR] ack 14 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-14 -> 15 -> END 2
-
+8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> END 8
+[91m[ERROR] Packet [15] sent[0m
 [91m[ERROR] add : [0m
-14 -> 15 -> 16 -> END 3
-[91m[ERROR] Packet [16] sended[0m
-[91m[ERROR] ack 15 received, 1 pkt removed[0m
+8 -> 9 -> 10 -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> END 9
+[91m[ERROR] Packet [16] sent[0m
+[91m[ERROR] ack 15 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
 15 -> 16 -> END 2
 
 [91m[ERROR] add : [0m
 15 -> 16 -> 17 -> END 3
-[91m[ERROR] Packet [17] sended[0m
-[91m[ERROR] ack 16 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-16 -> 17 -> END 2
-
+[91m[ERROR] Packet [17] sent[0m
 [91m[ERROR] add : [0m
-16 -> 17 -> 18 -> END 3
-[91m[ERROR] Packet [18] sended[0m
-[91m[ERROR] ack 17 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-17 -> 18 -> END 2
-
+15 -> 16 -> 17 -> 18 -> END 4
+[91m[ERROR] Packet [18] sent[0m
 [91m[ERROR] add : [0m
-17 -> 18 -> 19 -> END 3
-[91m[ERROR] Packet [19] sended[0m
-[91m[ERROR] ack 18 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-18 -> 19 -> END 2
-
+15 -> 16 -> 17 -> 18 -> 19 -> END 5
+[91m[ERROR] Packet [19] sent[0m
 [91m[ERROR] add : [0m
-18 -> 19 -> 20 -> END 3
-[91m[ERROR] Packet [20] sended[0m
-[91m[ERROR] ack 19 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-19 -> 20 -> END 2
-
+15 -> 16 -> 17 -> 18 -> 19 -> 20 -> END 6
+[91m[ERROR] Packet [20] sent[0m
 [91m[ERROR] add : [0m
-19 -> 20 -> 21 -> END 3
-[91m[ERROR] Packet [21] sended[0m
-[91m[ERROR] ack 20 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-20 -> 21 -> END 2
-
+15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21 -> END 7
+[91m[ERROR] Packet [21] sent[0m
 [91m[ERROR] add : [0m
-20 -> 21 -> 22 -> END 3
-[91m[ERROR] Packet [22] sended[0m
-[91m[ERROR] ack 21 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-21 -> 22 -> END 2
-
+15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21 -> 22 -> END 8
+[91m[ERROR] Packet [22] sent[0m
 [91m[ERROR] add : [0m
-21 -> 22 -> 23 -> END 3
-[91m[ERROR] Packet [23] sended[0m
-[91m[ERROR] ack 22 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-22 -> 23 -> END 2
-
+15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21 -> 22 -> 23 -> END 9
+[91m[ERROR] Packet [23] sent[0m
 [91m[ERROR] add : [0m
+15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21 -> 22 -> 23 -> 24 -> END 10
+[91m[ERROR] Packet [24] sent[0m
+[91m[ERROR] ack 22 received, 7 pkt removed[0m
+[91m[ERROR] remove : [0m
 22 -> 23 -> 24 -> END 3
-[91m[ERROR] Packet [24] sended[0m
-[91m[ERROR] ack 23 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-23 -> 24 -> END 2
 
 [91m[ERROR] add : [0m
-23 -> 24 -> 25 -> END 3
-[91m[ERROR] Packet [25] sended[0m
-[91m[ERROR] ack 24 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-24 -> 25 -> END 2
-
+22 -> 23 -> 24 -> 25 -> END 4
+[91m[ERROR] Packet [25] sent[0m
 [91m[ERROR] add : [0m
-24 -> 25 -> 26 -> END 3
-[91m[ERROR] Packet [26] sended[0m
-[91m[ERROR] ack 25 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-25 -> 26 -> END 2
-
+22 -> 23 -> 24 -> 25 -> 26 -> END 5
+[91m[ERROR] Packet [26] sent[0m
 [91m[ERROR] add : [0m
-25 -> 26 -> 27 -> END 3
-[91m[ERROR] Packet [27] sended[0m
-[91m[ERROR] ack 26 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-26 -> 27 -> END 2
-
+22 -> 23 -> 24 -> 25 -> 26 -> 27 -> END 6
+[91m[ERROR] Packet [27] sent[0m
 [91m[ERROR] add : [0m
-26 -> 27 -> 28 -> END 3
-[91m[ERROR] Packet [28] sended[0m
-[91m[ERROR] ack 27 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-27 -> 28 -> END 2
-
+22 -> 23 -> 24 -> 25 -> 26 -> 27 -> 28 -> END 7
+[91m[ERROR] Packet [28] sent[0m
 [91m[ERROR] add : [0m
-27 -> 28 -> 29 -> END 3
-[91m[ERROR] Packet [29] sended[0m
-[91m[ERROR] ack 28 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-28 -> 29 -> END 2
-
+22 -> 23 -> 24 -> 25 -> 26 -> 27 -> 28 -> 29 -> END 8
+[91m[ERROR] Packet [29] sent[0m
 [91m[ERROR] add : [0m
-28 -> 29 -> 30 -> END 3
-[91m[ERROR] Packet [30] sended[0m
-[91m[ERROR] ack 29 received, 1 pkt removed[0m
+22 -> 23 -> 24 -> 25 -> 26 -> 27 -> 28 -> 29 -> 30 -> END 9
+[91m[ERROR] Packet [30] sent[0m
+[91m[ERROR] ack 29 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
 29 -> 30 -> END 2
 
 [91m[ERROR] add : [0m
 29 -> 30 -> 31 -> END 3
-[91m[ERROR] Packet [31] sended[0m
-[91m[ERROR] ack 30 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-30 -> 31 -> END 2
-
+[91m[ERROR] Packet [31] sent[0m
 [91m[ERROR] add : [0m
-30 -> 31 -> 32 -> END 3
-[91m[ERROR] Packet [32] sended[0m
-[91m[ERROR] ack 31 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-31 -> 32 -> END 2
-
+29 -> 30 -> 31 -> 32 -> END 4
+[91m[ERROR] Packet [32] sent[0m
 [91m[ERROR] add : [0m
-31 -> 32 -> 33 -> END 3
-[91m[ERROR] Packet [33] sended[0m
-[91m[ERROR] ack 32 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-32 -> 33 -> END 2
-
+29 -> 30 -> 31 -> 32 -> 33 -> END 5
+[91m[ERROR] Packet [33] sent[0m
 [91m[ERROR] add : [0m
-32 -> 33 -> 34 -> END 3
-[91m[ERROR] Packet [34] sended[0m
-[91m[ERROR] ack 33 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-33 -> 34 -> END 2
-
+29 -> 30 -> 31 -> 32 -> 33 -> 34 -> END 6
+[91m[ERROR] Packet [34] sent[0m
 [91m[ERROR] add : [0m
-33 -> 34 -> 35 -> END 3
-[91m[ERROR] Packet [35] sended[0m
-[91m[ERROR] ack 34 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-34 -> 35 -> END 2
-
+29 -> 30 -> 31 -> 32 -> 33 -> 34 -> 35 -> END 7
+[91m[ERROR] Packet [35] sent[0m
 [91m[ERROR] add : [0m
-34 -> 35 -> 36 -> END 3
-[91m[ERROR] Packet [36] sended[0m
-[91m[ERROR] ack 35 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-35 -> 36 -> END 2
-
+29 -> 30 -> 31 -> 32 -> 33 -> 34 -> 35 -> 36 -> END 8
+[91m[ERROR] Packet [36] sent[0m
 [91m[ERROR] add : [0m
-35 -> 36 -> 37 -> END 3
-[91m[ERROR] Packet [37] sended[0m
-[91m[ERROR] ack 36 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-36 -> 37 -> END 2
-
+29 -> 30 -> 31 -> 32 -> 33 -> 34 -> 35 -> 36 -> 37 -> END 9
+[91m[ERROR] Packet [37] sent[0m
 [91m[ERROR] add : [0m
+29 -> 30 -> 31 -> 32 -> 33 -> 34 -> 35 -> 36 -> 37 -> 38 -> END 10
+[91m[ERROR] Packet [38] sent[0m
+[91m[ERROR] ack 36 received, 7 pkt removed[0m
+[91m[ERROR] remove : [0m
 36 -> 37 -> 38 -> END 3
-[91m[ERROR] Packet [38] sended[0m
-[91m[ERROR] ack 37 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-37 -> 38 -> END 2
 
 [91m[ERROR] add : [0m
-37 -> 38 -> 39 -> END 3
-[91m[ERROR] Packet [39] sended[0m
-[91m[ERROR] ack 38 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-38 -> 39 -> END 2
-
+36 -> 37 -> 38 -> 39 -> END 4
+[91m[ERROR] Packet [39] sent[0m
 [91m[ERROR] add : [0m
-38 -> 39 -> 40 -> END 3
-[91m[ERROR] Packet [40] sended[0m
-[91m[ERROR] ack 39 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-39 -> 40 -> END 2
-
+36 -> 37 -> 38 -> 39 -> 40 -> END 5
+[91m[ERROR] Packet [40] sent[0m
 [91m[ERROR] add : [0m
-39 -> 40 -> 41 -> END 3
-[91m[ERROR] Packet [41] sended[0m
-[91m[ERROR] ack 40 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-40 -> 41 -> END 2
-
+36 -> 37 -> 38 -> 39 -> 40 -> 41 -> END 6
+[91m[ERROR] Packet [41] sent[0m
 [91m[ERROR] add : [0m
-40 -> 41 -> 42 -> END 3
-[91m[ERROR] Packet [42] sended[0m
-[91m[ERROR] ack 41 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-41 -> 42 -> END 2
-
+36 -> 37 -> 38 -> 39 -> 40 -> 41 -> 42 -> END 7
+[91m[ERROR] Packet [42] sent[0m
 [91m[ERROR] add : [0m
-41 -> 42 -> 43 -> END 3
-[91m[ERROR] Packet [43] sended[0m
-[91m[ERROR] ack 42 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-42 -> 43 -> END 2
-
+36 -> 37 -> 38 -> 39 -> 40 -> 41 -> 42 -> 43 -> END 8
+[91m[ERROR] Packet [43] sent[0m
 [91m[ERROR] add : [0m
-42 -> 43 -> 44 -> END 3
-[91m[ERROR] Packet [44] sended[0m
-[91m[ERROR] ack 43 received, 1 pkt removed[0m
+36 -> 37 -> 38 -> 39 -> 40 -> 41 -> 42 -> 43 -> 44 -> END 9
+[91m[ERROR] Packet [44] sent[0m
+[91m[ERROR] ack 43 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
 43 -> 44 -> END 2
 
 [91m[ERROR] add : [0m
 43 -> 44 -> 45 -> END 3
-[91m[ERROR] Packet [45] sended[0m
+[91m[ERROR] Packet [45] sent[0m
 [91m[ERROR] add : [0m
 43 -> 44 -> 45 -> 46 -> END 4
-[91m[ERROR] Packet [46] sended[0m
+[91m[ERROR] Packet [46] sent[0m
 [91m[ERROR] add : [0m
 43 -> 44 -> 45 -> 46 -> 47 -> END 5
-[91m[ERROR] Packet [47] sended[0m
-[91m[ERROR] ack 44 received, 1 pkt removed[0m
+[91m[ERROR] Packet [47] sent[0m
+[91m[ERROR] add : [0m
+43 -> 44 -> 45 -> 46 -> 47 -> 48 -> END 6
+[91m[ERROR] Packet [48] sent[0m
+[91m[ERROR] add : [0m
+43 -> 44 -> 45 -> 46 -> 47 -> 48 -> 49 -> END 7
+[91m[ERROR] Packet [49] sent[0m
+[91m[ERROR] add : [0m
+43 -> 44 -> 45 -> 46 -> 47 -> 48 -> 49 -> 50 -> END 8
+[91m[ERROR] Packet [50] sent[0m
+[91m[ERROR] add : [0m
+43 -> 44 -> 45 -> 46 -> 47 -> 48 -> 49 -> 50 -> 51 -> END 9
+[91m[ERROR] Packet [51] sent[0m
+[91m[ERROR] ack 50 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
-44 -> 45 -> 46 -> 47 -> END 4
+50 -> 51 -> END 2
 
 [91m[ERROR] add : [0m
-44 -> 45 -> 46 -> 47 -> 48 -> END 5
-[91m[ERROR] Packet [48] sended[0m
-[91m[ERROR] ack 45 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-45 -> 46 -> 47 -> 48 -> END 4
-
+50 -> 51 -> 52 -> END 3
+[91m[ERROR] Packet [52] sent[0m
 [91m[ERROR] add : [0m
-45 -> 46 -> 47 -> 48 -> 49 -> END 5
-[91m[ERROR] Packet [49] sended[0m
-[91m[ERROR] ack 46 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-46 -> 47 -> 48 -> 49 -> END 4
-
-[91m[ERROR] add : [0m
-46 -> 47 -> 48 -> 49 -> 50 -> END 5
-[91m[ERROR] Packet [50] sended[0m
-[91m[ERROR] ack 47 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-47 -> 48 -> 49 -> 50 -> END 4
-
-[91m[ERROR] add : [0m
-47 -> 48 -> 49 -> 50 -> 51 -> END 5
-[91m[ERROR] Packet [51] sended[0m
-[91m[ERROR] ack 48 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-48 -> 49 -> 50 -> 51 -> END 4
-
-[91m[ERROR] add : [0m
-48 -> 49 -> 50 -> 51 -> 52 -> END 5
-[91m[ERROR] Packet [52] sended[0m
-[91m[ERROR] ack 49 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-49 -> 50 -> 51 -> 52 -> END 4
-
-[91m[ERROR] add : [0m
-49 -> 50 -> 51 -> 52 -> 53 -> END 5
-[91m[ERROR] Packet [53] sended[0m
-[91m[ERROR] ack 50 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
 50 -> 51 -> 52 -> 53 -> END 4
-
+[91m[ERROR] Packet [53] sent[0m
 [91m[ERROR] add : [0m
 50 -> 51 -> 52 -> 53 -> 54 -> END 5
-[91m[ERROR] Packet [54] sended[0m
-[91m[ERROR] ack 51 received, 1 pkt removed[0m
+[91m[ERROR] Packet [54] sent[0m
+[91m[ERROR] add : [0m
+50 -> 51 -> 52 -> 53 -> 54 -> 55 -> END 6
+[91m[ERROR] Packet [55] sent[0m
+[91m[ERROR] add : [0m
+50 -> 51 -> 52 -> 53 -> 54 -> 55 -> 56 -> END 7
+[91m[ERROR] Packet [56] sent[0m
+[91m[ERROR] add : [0m
+50 -> 51 -> 52 -> 53 -> 54 -> 55 -> 56 -> 57 -> END 8
+[91m[ERROR] Packet [57] sent[0m
+[91m[ERROR] add : [0m
+50 -> 51 -> 52 -> 53 -> 54 -> 55 -> 56 -> 57 -> 58 -> END 9
+[91m[ERROR] Packet [58] sent[0m
+[91m[ERROR] ack 57 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
-51 -> 52 -> 53 -> 54 -> END 4
+57 -> 58 -> END 2
 
 [91m[ERROR] add : [0m
-51 -> 52 -> 53 -> 54 -> 55 -> END 5
-[91m[ERROR] Packet [55] sended[0m
-[91m[ERROR] ack 52 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-52 -> 53 -> 54 -> 55 -> END 4
-
+57 -> 58 -> 59 -> END 3
+[91m[ERROR] Packet [59] sent[0m
 [91m[ERROR] add : [0m
-52 -> 53 -> 54 -> 55 -> 56 -> END 5
-[91m[ERROR] Packet [56] sended[0m
-[91m[ERROR] ack 53 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-53 -> 54 -> 55 -> 56 -> END 4
-
-[91m[ERROR] add : [0m
-53 -> 54 -> 55 -> 56 -> 57 -> END 5
-[91m[ERROR] Packet [57] sended[0m
-[91m[ERROR] ack 54 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-54 -> 55 -> 56 -> 57 -> END 4
-
-[91m[ERROR] add : [0m
-54 -> 55 -> 56 -> 57 -> 58 -> END 5
-[91m[ERROR] Packet [58] sended[0m
-[91m[ERROR] ack 55 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-55 -> 56 -> 57 -> 58 -> END 4
-
-[91m[ERROR] add : [0m
-55 -> 56 -> 57 -> 58 -> 59 -> END 5
-[91m[ERROR] Packet [59] sended[0m
-[91m[ERROR] ack 56 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-56 -> 57 -> 58 -> 59 -> END 4
-
-[91m[ERROR] add : [0m
-56 -> 57 -> 58 -> 59 -> 60 -> END 5
-[91m[ERROR] Packet [60] sended[0m
-[91m[ERROR] ack 57 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
 57 -> 58 -> 59 -> 60 -> END 4
-
+[91m[ERROR] Packet [60] sent[0m
 [91m[ERROR] add : [0m
 57 -> 58 -> 59 -> 60 -> 61 -> END 5
-[91m[ERROR] Packet [61] sended[0m
-[91m[ERROR] ack 58 received, 1 pkt removed[0m
+[91m[ERROR] Packet [61] sent[0m
+[91m[ERROR] add : [0m
+57 -> 58 -> 59 -> 60 -> 61 -> 62 -> END 6
+[91m[ERROR] Packet [62] sent[0m
+[91m[ERROR] add : [0m
+57 -> 58 -> 59 -> 60 -> 61 -> 62 -> 63 -> END 7
+[91m[ERROR] Packet [63] sent[0m
+[91m[ERROR] add : [0m
+57 -> 58 -> 59 -> 60 -> 61 -> 62 -> 63 -> 64 -> END 8
+[91m[ERROR] Packet [64] sent[0m
+[91m[ERROR] add : [0m
+57 -> 58 -> 59 -> 60 -> 61 -> 62 -> 63 -> 64 -> 65 -> END 9
+[91m[ERROR] Packet [65] sent[0m
+[91m[ERROR] add : [0m
+57 -> 58 -> 59 -> 60 -> 61 -> 62 -> 63 -> 64 -> 65 -> 66 -> END 10
+[91m[ERROR] Packet [66] sent[0m
+[91m[ERROR] ack 64 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
-58 -> 59 -> 60 -> 61 -> END 4
+64 -> 65 -> 66 -> END 3
 
 [91m[ERROR] add : [0m
-58 -> 59 -> 60 -> 61 -> 62 -> END 5
-[91m[ERROR] Packet [62] sended[0m
-[91m[ERROR] ack 59 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-59 -> 60 -> 61 -> 62 -> END 4
-
-[91m[ERROR] add : [0m
-59 -> 60 -> 61 -> 62 -> 63 -> END 5
-[91m[ERROR] Packet [63] sended[0m
-[91m[ERROR] ack 60 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-60 -> 61 -> 62 -> 63 -> END 4
-
-[91m[ERROR] add : [0m
-60 -> 61 -> 62 -> 63 -> 64 -> END 5
-[91m[ERROR] Packet [64] sended[0m
-[91m[ERROR] ack 61 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-61 -> 62 -> 63 -> 64 -> END 4
-
-[91m[ERROR] add : [0m
-61 -> 62 -> 63 -> 64 -> 65 -> END 5
-[91m[ERROR] Packet [65] sended[0m
-[91m[ERROR] ack 62 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-62 -> 63 -> 64 -> 65 -> END 4
-
-[91m[ERROR] add : [0m
-62 -> 63 -> 64 -> 65 -> 66 -> END 5
-[91m[ERROR] Packet [66] sended[0m
-[91m[ERROR] ack 63 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-63 -> 64 -> 65 -> 66 -> END 4
-
-[91m[ERROR] add : [0m
-63 -> 64 -> 65 -> 66 -> 67 -> END 5
-[91m[ERROR] Packet [67] sended[0m
-[91m[ERROR] ack 64 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
 64 -> 65 -> 66 -> 67 -> END 4
-
+[91m[ERROR] Packet [67] sent[0m
 [91m[ERROR] add : [0m
 64 -> 65 -> 66 -> 67 -> 68 -> END 5
-[91m[ERROR] Packet [68] sended[0m
-[91m[ERROR] ack 65 received, 1 pkt removed[0m
+[91m[ERROR] Packet [68] sent[0m
+[91m[ERROR] add : [0m
+64 -> 65 -> 66 -> 67 -> 68 -> 69 -> END 6
+[91m[ERROR] Packet [69] sent[0m
+[91m[ERROR] add : [0m
+64 -> 65 -> 66 -> 67 -> 68 -> 69 -> 70 -> END 7
+[91m[ERROR] Packet [70] sent[0m
+[91m[ERROR] add : [0m
+64 -> 65 -> 66 -> 67 -> 68 -> 69 -> 70 -> 71 -> END 8
+[91m[ERROR] Packet [71] sent[0m
+[91m[ERROR] add : [0m
+64 -> 65 -> 66 -> 67 -> 68 -> 69 -> 70 -> 71 -> 72 -> END 9
+[91m[ERROR] Packet [72] sent[0m
+[91m[ERROR] add : [0m
+64 -> 65 -> 66 -> 67 -> 68 -> 69 -> 70 -> 71 -> 72 -> 73 -> END 10
+[91m[ERROR] Packet [73] sent[0m
+[91m[ERROR] ack 71 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
-65 -> 66 -> 67 -> 68 -> END 4
+71 -> 72 -> 73 -> END 3
 
 [91m[ERROR] add : [0m
-65 -> 66 -> 67 -> 68 -> 69 -> END 5
-[91m[ERROR] Packet [69] sended[0m
-[91m[ERROR] ack 66 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-66 -> 67 -> 68 -> 69 -> END 4
-
-[91m[ERROR] add : [0m
-66 -> 67 -> 68 -> 69 -> 70 -> END 5
-[91m[ERROR] Packet [70] sended[0m
-[91m[ERROR] ack 67 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-67 -> 68 -> 69 -> 70 -> END 4
-
-[91m[ERROR] add : [0m
-67 -> 68 -> 69 -> 70 -> 71 -> END 5
-[91m[ERROR] Packet [71] sended[0m
-[91m[ERROR] ack 68 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-68 -> 69 -> 70 -> 71 -> END 4
-
-[91m[ERROR] add : [0m
-68 -> 69 -> 70 -> 71 -> 72 -> END 5
-[91m[ERROR] Packet [72] sended[0m
-[91m[ERROR] ack 69 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-69 -> 70 -> 71 -> 72 -> END 4
-
-[91m[ERROR] add : [0m
-69 -> 70 -> 71 -> 72 -> 73 -> END 5
-[91m[ERROR] Packet [73] sended[0m
-[91m[ERROR] ack 70 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-70 -> 71 -> 72 -> 73 -> END 4
-
-[91m[ERROR] add : [0m
-70 -> 71 -> 72 -> 73 -> 74 -> END 5
-[91m[ERROR] Packet [74] sended[0m
-[91m[ERROR] ack 71 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
 71 -> 72 -> 73 -> 74 -> END 4
-
+[91m[ERROR] Packet [74] sent[0m
 [91m[ERROR] add : [0m
 71 -> 72 -> 73 -> 74 -> 75 -> END 5
-[91m[ERROR] Packet [75] sended[0m
-[91m[ERROR] ack 72 received, 1 pkt removed[0m
+[91m[ERROR] Packet [75] sent[0m
+[91m[ERROR] add : [0m
+71 -> 72 -> 73 -> 74 -> 75 -> 76 -> END 6
+[91m[ERROR] Packet [76] sent[0m
+[91m[ERROR] add : [0m
+71 -> 72 -> 73 -> 74 -> 75 -> 76 -> 77 -> END 7
+[91m[ERROR] Packet [77] sent[0m
+[91m[ERROR] add : [0m
+71 -> 72 -> 73 -> 74 -> 75 -> 76 -> 77 -> 78 -> END 8
+[91m[ERROR] Packet [78] sent[0m
+[91m[ERROR] add : [0m
+71 -> 72 -> 73 -> 74 -> 75 -> 76 -> 77 -> 78 -> 79 -> END 9
+[91m[ERROR] Packet [79] sent[0m
+[91m[ERROR] ack 78 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
-72 -> 73 -> 74 -> 75 -> END 4
+78 -> 79 -> END 2
 
 [91m[ERROR] add : [0m
-72 -> 73 -> 74 -> 75 -> 76 -> END 5
-[91m[ERROR] Packet [76] sended[0m
-[91m[ERROR] ack 73 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-73 -> 74 -> 75 -> 76 -> END 4
-
+78 -> 79 -> 80 -> END 3
+[91m[ERROR] Packet [80] sent[0m
 [91m[ERROR] add : [0m
-73 -> 74 -> 75 -> 76 -> 77 -> END 5
-[91m[ERROR] Packet [77] sended[0m
-[91m[ERROR] ack 74 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-74 -> 75 -> 76 -> 77 -> END 4
-
-[91m[ERROR] add : [0m
-74 -> 75 -> 76 -> 77 -> 78 -> END 5
-[91m[ERROR] Packet [78] sended[0m
-[91m[ERROR] ack 75 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-75 -> 76 -> 77 -> 78 -> END 4
-
-[91m[ERROR] add : [0m
-75 -> 76 -> 77 -> 78 -> 79 -> END 5
-[91m[ERROR] Packet [79] sended[0m
-[91m[ERROR] ack 76 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-76 -> 77 -> 78 -> 79 -> END 4
-
-[91m[ERROR] add : [0m
-76 -> 77 -> 78 -> 79 -> 80 -> END 5
-[91m[ERROR] Packet [80] sended[0m
-[91m[ERROR] ack 77 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-77 -> 78 -> 79 -> 80 -> END 4
-
-[91m[ERROR] add : [0m
-77 -> 78 -> 79 -> 80 -> 81 -> END 5
-[91m[ERROR] Packet [81] sended[0m
-[91m[ERROR] ack 78 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
 78 -> 79 -> 80 -> 81 -> END 4
-
+[91m[ERROR] Packet [81] sent[0m
 [91m[ERROR] add : [0m
 78 -> 79 -> 80 -> 81 -> 82 -> END 5
-[91m[ERROR] Packet [82] sended[0m
-[91m[ERROR] ack 79 received, 1 pkt removed[0m
+[91m[ERROR] Packet [82] sent[0m
+[91m[ERROR] add : [0m
+78 -> 79 -> 80 -> 81 -> 82 -> 83 -> END 6
+[91m[ERROR] Packet [83] sent[0m
+[91m[ERROR] add : [0m
+78 -> 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> END 7
+[91m[ERROR] Packet [84] sent[0m
+[91m[ERROR] add : [0m
+78 -> 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85 -> END 8
+[91m[ERROR] Packet [85] sent[0m
+[91m[ERROR] add : [0m
+78 -> 79 -> 80 -> 81 -> 82 -> 83 -> 84 -> 85 -> 86 -> END 9
+[91m[ERROR] Packet [86] sent[0m
+[91m[ERROR] ack 85 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
-79 -> 80 -> 81 -> 82 -> END 4
+85 -> 86 -> END 2
 
 [91m[ERROR] add : [0m
-79 -> 80 -> 81 -> 82 -> 83 -> END 5
-[91m[ERROR] Packet [83] sended[0m
-[91m[ERROR] ack 80 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-80 -> 81 -> 82 -> 83 -> END 4
-
+85 -> 86 -> 87 -> END 3
+[91m[ERROR] Packet [87] sent[0m
 [91m[ERROR] add : [0m
-80 -> 81 -> 82 -> 83 -> 84 -> END 5
-[91m[ERROR] Packet [84] sended[0m
-[91m[ERROR] ack 81 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-81 -> 82 -> 83 -> 84 -> END 4
-
-[91m[ERROR] add : [0m
-81 -> 82 -> 83 -> 84 -> 85 -> END 5
-[91m[ERROR] Packet [85] sended[0m
-[91m[ERROR] ack 82 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-82 -> 83 -> 84 -> 85 -> END 4
-
-[91m[ERROR] add : [0m
-82 -> 83 -> 84 -> 85 -> 86 -> END 5
-[91m[ERROR] Packet [86] sended[0m
-[91m[ERROR] ack 83 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-83 -> 84 -> 85 -> 86 -> END 4
-
-[91m[ERROR] add : [0m
-83 -> 84 -> 85 -> 86 -> 87 -> END 5
-[91m[ERROR] Packet [87] sended[0m
-[91m[ERROR] ack 84 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-84 -> 85 -> 86 -> 87 -> END 4
-
-[91m[ERROR] add : [0m
-84 -> 85 -> 86 -> 87 -> 88 -> END 5
-[91m[ERROR] Packet [88] sended[0m
-[91m[ERROR] ack 85 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
 85 -> 86 -> 87 -> 88 -> END 4
-
+[91m[ERROR] Packet [88] sent[0m
 [91m[ERROR] add : [0m
 85 -> 86 -> 87 -> 88 -> 89 -> END 5
-[91m[ERROR] Packet [89] sended[0m
-[91m[ERROR] ack 86 received, 1 pkt removed[0m
+[91m[ERROR] Packet [89] sent[0m
+[91m[ERROR] add : [0m
+85 -> 86 -> 87 -> 88 -> 89 -> 90 -> END 6
+[91m[ERROR] Packet [90] sent[0m
+[91m[ERROR] add : [0m
+85 -> 86 -> 87 -> 88 -> 89 -> 90 -> 91 -> END 7
+[91m[ERROR] Packet [91] sent[0m
+[91m[ERROR] add : [0m
+85 -> 86 -> 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> END 8
+[91m[ERROR] Packet [92] sent[0m
+[91m[ERROR] add : [0m
+85 -> 86 -> 87 -> 88 -> 89 -> 90 -> 91 -> 92 -> 93 -> END 9
+[91m[ERROR] Packet [93] sent[0m
+[91m[ERROR] ack 92 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
-86 -> 87 -> 88 -> 89 -> END 4
+92 -> 93 -> END 2
 
 [91m[ERROR] add : [0m
-86 -> 87 -> 88 -> 89 -> 90 -> END 5
-[91m[ERROR] Packet [90] sended[0m
-[91m[ERROR] ack 87 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-87 -> 88 -> 89 -> 90 -> END 4
-
+92 -> 93 -> 94 -> END 3
+[91m[ERROR] Packet [94] sent[0m
 [91m[ERROR] add : [0m
-87 -> 88 -> 89 -> 90 -> 91 -> END 5
-[91m[ERROR] Packet [91] sended[0m
-[91m[ERROR] ack 88 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-88 -> 89 -> 90 -> 91 -> END 4
-
-[91m[ERROR] add : [0m
-88 -> 89 -> 90 -> 91 -> 92 -> END 5
-[91m[ERROR] Packet [92] sended[0m
-[91m[ERROR] ack 89 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-89 -> 90 -> 91 -> 92 -> END 4
-
-[91m[ERROR] add : [0m
-89 -> 90 -> 91 -> 92 -> 93 -> END 5
-[91m[ERROR] Packet [93] sended[0m
-[91m[ERROR] ack 90 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-90 -> 91 -> 92 -> 93 -> END 4
-
-[91m[ERROR] add : [0m
-90 -> 91 -> 92 -> 93 -> 94 -> END 5
-[91m[ERROR] Packet [94] sended[0m
-[91m[ERROR] ack 91 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-91 -> 92 -> 93 -> 94 -> END 4
-
-[91m[ERROR] add : [0m
-91 -> 92 -> 93 -> 94 -> 95 -> END 5
-[91m[ERROR] Packet [95] sended[0m
-[91m[ERROR] ack 92 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
 92 -> 93 -> 94 -> 95 -> END 4
-
+[91m[ERROR] Packet [95] sent[0m
 [91m[ERROR] add : [0m
 92 -> 93 -> 94 -> 95 -> 96 -> END 5
-[91m[ERROR] Packet [96] sended[0m
-[91m[ERROR] ack 93 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-93 -> 94 -> 95 -> 96 -> END 4
-
+[91m[ERROR] Packet [96] sent[0m
 [91m[ERROR] add : [0m
-93 -> 94 -> 95 -> 96 -> 97 -> END 5
-[91m[ERROR] Packet [97] sended[0m
-[91m[ERROR] ack 94 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-94 -> 95 -> 96 -> 97 -> END 4
-
+92 -> 93 -> 94 -> 95 -> 96 -> 97 -> END 6
+[91m[ERROR] Packet [97] sent[0m
 [91m[ERROR] add : [0m
-94 -> 95 -> 96 -> 97 -> 98 -> END 5
-[91m[ERROR] Packet [98] sended[0m
-[91m[ERROR] ack 95 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-95 -> 96 -> 97 -> 98 -> END 4
-
+92 -> 93 -> 94 -> 95 -> 96 -> 97 -> 98 -> END 7
+[91m[ERROR] Packet [98] sent[0m
 [91m[ERROR] add : [0m
-95 -> 96 -> 97 -> 98 -> 99 -> END 5
-[91m[ERROR] Packet [99] sended[0m
-[91m[ERROR] ack 96 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-96 -> 97 -> 98 -> 99 -> END 4
-
+92 -> 93 -> 94 -> 95 -> 96 -> 97 -> 98 -> 99 -> END 8
+[91m[ERROR] Packet [99] sent[0m
 [91m[ERROR] last_ack_to_receive = 100
 [0m
 [91m[ERROR] add : [0m
-96 -> 97 -> 98 -> 99 -> 100 -> END 5
-[91m[ERROR] Packet [100] sended[0m
-[91m[ERROR] ack 97 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-97 -> 98 -> 99 -> 100 -> END 4
-
-[91m[ERROR] ack 98 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-98 -> 99 -> 100 -> END 3
-
-[91m[ERROR] ack 99 received, 1 pkt removed[0m
+92 -> 93 -> 94 -> 95 -> 96 -> 97 -> 98 -> 99 -> 100 -> END 9
+[91m[ERROR] Packet [100] sent[0m
+[91m[ERROR] ack 99 received, 7 pkt removed[0m
 [91m[ERROR] remove : [0m
 99 -> 100 -> END 2
 
 [91m[ERROR] ack 100 received, 1 pkt removed[0m
-[91m[ERROR] remove : [0m
-100 -> END 1
-
-[91m[ERROR] Reached the EOF[0m
-[91m[ERROR] ack 100 received, 0 pkt removed[0m
 [91m[ERROR] remove : [0m
 100 -> END 1
 

@@ -40,6 +40,8 @@ mrproper:
 # It is likely that you will need to update this
 tests: all
 	./tests/run_tests.sh
+	./tests/packet_tests
+	./tests/buffer_tests
 
 # By default, logs are disabled. But you can enable them with the debug target.
 debug: CFLAGS += -D_DEBUG
