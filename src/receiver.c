@@ -18,13 +18,14 @@
 #define MAX_PKT_SIZE 512 + 16
 #define MAX_SEQNUM 256
 #define ACK_SIZE 10
+#define MAX_WINDOW 31
 
 int print_usage(char *prog_name) {
     ERROR("Usage:\n\t%s [-s stats_filename] listen_ip listen_port", prog_name);
     return EXIT_FAILURE;
 }
 
-int window = 31;
+int window = MAX_WINDOW;
 int last_acked = 0;
 int last_writed = -1;
 int nb_writed = 0;
@@ -47,23 +48,6 @@ int is_in_window(int seqnum){
     }
 }
 
-int get_first_oos_seqnum(buffer_t* buffer){
-    if(buffer->size == 0){
-        return 0;
-    }
-    int seq = last_acked;
-    node_t* current = buffer->first;
-    while(current != NULL){
-        if(seq == pkt_get_seqnum(current->pkt)-1){
-            seq += 1;
-        }else{
-            return seq+1;
-        }
-        current = current->next;
-    }
-    return seq + 1;
-}
-
 int write_buffer_to_file(buffer_t* buffer, const int fdOut){
     node_t* current = buffer->first;
     pkt_t* pkt;
@@ -80,12 +64,13 @@ int write_buffer_to_file(buffer_t* buffer, const int fdOut){
 
         current = current->next;
         pkt = buffer_remove(buffer,pkt_get_seqnum(pkt));
+        // window++;    
         nb_writed++;
     }
     return 1;
 }
 
-int send_ack(const int sfd,int seqnum, uint8_t type){
+int send_ack(const int sfd,int seqnum, uint8_t type,int wind){
     pkt_t* ack = pkt_new();
     if(!ack){
         ERROR("Can't create ack packet");
@@ -94,7 +79,7 @@ int send_ack(const int sfd,int seqnum, uint8_t type){
     pkt_set_type(ack,type);
     pkt_set_seqnum(ack,seqnum);
     pkt_set_tr(ack,0);
-    pkt_set_window(ack,window);
+    pkt_set_window(ack,wind);
     pkt_set_timestamp(ack,(uint32_t) time(NULL));
     pkt_set_payload(ack,NULL,0);
 
@@ -134,7 +119,11 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
     pfds = malloc(sizeof(struct pollfd)*nfds);
     buffer_t* buffer = buffer_init();
     int ready =-1;
-        srand(time(NULL));
+    struct timespec start,end;
+    int reset_time = 1;
+    int n_accumulated = 0;
+    int bypass = 0;
+    //srand(time(NULL));
 
     while(last_acked != lastack_to_send 
         && ready != 0
@@ -163,54 +152,63 @@ void read_write_loop_receiver(const int sfd,const int fdOut){
             s = read(pfds[0].fd,buf,MAX_PKT_SIZE);
             ERROR("%ld bytes readed",s);
             if(s == -1){
-                ERROR("Can't read socket");continue;
+                ERROR("Can't read socket");
             }
+
+            if(reset_time){
+                clock_gettime(CLOCK_MONOTONIC_RAW,&start);
+                reset_time = 0;
+            }
+            clock_gettime(CLOCK_MONOTONIC_RAW,&end);
+            n_accumulated++;
+
             st = pkt_decode(buf,s,pkt);
             if(st != PKT_OK || pkt_get_type(pkt) != PTYPE_DATA){
-                ERROR("Packet incorrect : %d",st);pkt_del(pkt);continue;
-            }
-            ERROR("Packet [%d] received nb writed [%d]",pkt_get_seqnum(pkt),nb_writed);
-            if(is_in_buffer(buffer,pkt_get_seqnum(pkt))){ 
-                ERROR("Duplicate packet [%d]",pkt_get_seqnum(pkt));
-                continue;
-            }
-            if(is_in_window(pkt_get_seqnum(pkt))){
-                
-                if(rand() % 20 == 0)
-                    pkt_set_tr(pkt,1);
-
-                if(pkt_get_tr(pkt) == 1){
-                    send_ack(sfd,pkt_get_seqnum(pkt), PTYPE_NACK);
+                ERROR("Packet incorrect : %d",st);pkt_del(pkt);bypass=1;
+            }else{
+                ERROR("Packet [%d] received, nb writed [%d], window [%d]",pkt_get_seqnum(pkt),nb_writed,window);
+                if(is_in_buffer(buffer,pkt_get_seqnum(pkt))){ 
+                    ERROR("Duplicate packet [%d]",pkt_get_seqnum(pkt));bypass=1;
                 }
-                else if(pkt_get_type(pkt) == PTYPE_DATA 
-                        && pkt_get_length(pkt) == 0
-                ){
-
-                    //if(pkt_get_seqnum(pkt) == potentialEOF){
-                    if(pkt_get_seqnum(pkt) == (nb_writed) % MAX_SEQNUM){
-                        ERROR("EOF for sender");
-                        lastack_to_send = pkt_get_seqnum(pkt);
-                    }
-                    //}
-                    // ERROR("Potential EOF [%d]",potentialEOF);
-                    // potentialEOF = pkt_get_seqnum(pkt) ;
-                }
-                else{
-                    error = buffer_enqueue(buffer,pkt);
-                    if(error == -1){
-                        ERROR("Out of memory while adding to buffer");return;
-                    }
-
-                    error = write_buffer_to_file(buffer,fdOut);
-                    if(error == -1){
-                        ERROR("Error while writing");
+                else if(is_in_window(pkt_get_seqnum(pkt))){
+                    
+                    if(pkt_get_tr(pkt) == 1){
+                        send_ack(sfd,pkt_get_seqnum(pkt), PTYPE_NACK, window - buffer->size);
                         continue;
                     }
+                    else if(pkt_get_type(pkt) == PTYPE_DATA && pkt_get_length(pkt) == 0){
+                        if(pkt_get_seqnum(pkt) == (nb_writed) % MAX_SEQNUM){
+                            ERROR("EOF for sender");
+                            lastack_to_send = pkt_get_seqnum(pkt);
+                            bypass=1;
+                        }
+                    }
+                    else{
+                        error = buffer_enqueue(buffer,pkt);
+                        if(error == -1){
+                            ERROR("Out of memory while adding to buffer");return;
+                        }
+                        
+                        error = write_buffer_to_file(buffer,fdOut);
+                        if(error == -1){
+                            ERROR("Error while writing");
+                            //continue;
+                        }
+                        if(window > MAX_WINDOW) window = MAX_WINDOW;
+                    }
                 }
-                send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_ACK);
+                else{
+                    ERROR("Packet not in window [%d]",pkt_get_seqnum(pkt));
+                }
             }
-            else{
-                ERROR("Packet not in window [%d]",pkt_get_seqnum(pkt));
+            if( (end.tv_sec - start.tv_sec) * 1000.0f + (end.tv_nsec - start.tv_nsec) / 1000.0f > 500.0f
+                || n_accumulated >= MAX_WINDOW/4 
+                || bypass
+                || nb_writed == 1){
+                send_ack(sfd,(last_writed + 1) % MAX_SEQNUM, PTYPE_ACK,window - buffer->size);
+                n_accumulated = 0;
+                reset_time = 1;
+                bypass = 0;
             }
         }
     }

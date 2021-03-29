@@ -601,7 +601,6 @@
 [0m
 [91m[ERROR] 12 bytes readed[0m
 [91m[ERROR] Packet [100] received nb writed [100][0m
-[91m[ERROR] Potential EOF [100][0m
 [91m[ERROR] EOF for sender[0m
 [91m[ERROR] ack 100 sended
 [0m
