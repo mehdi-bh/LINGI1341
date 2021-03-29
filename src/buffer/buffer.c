@@ -190,18 +190,24 @@ pkt_t* look_for_timedout_packet(buffer_t* buffer){
     }
     node_t* cur = buffer->first;
     uint32_t now_s;
+    int found = 0;
     for(int i = 0 ; i < (int)buffer->size ; i++){
         now_s = (uint32_t) time(NULL);
-        if(
-            pkt_get_timestamp(cur->pkt) != 0 &&
-            now_s - pkt_get_timestamp(cur->pkt) > RTO ){
-            ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
-            pkt_set_timestamp(cur->pkt,now_s);
-            return cur->pkt;
+        if(pkt_get_timestamp(cur->pkt) != 0 &&
+         now_s - pkt_get_timestamp(cur->pkt) > RTO ){
+            if(!found){
+                ERROR("Packet %d timed out",pkt_get_seqnum(cur->pkt));
+                pkt_set_timestamp(cur->pkt,now_s);
+                pkt = cur->pkt;
+                found = 1;
+            }
+            else{
+                pkt_set_timestamp(cur->pkt,now_s - RTO/2);
+            }
         }
         cur = cur->next;
     }
-    return NULL;
+    return pkt;
 }
 
 pkt_t* look_for_unsended_packet(buffer_t* buffer){
