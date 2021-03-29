@@ -1,5 +1,6 @@
 #include "buffer.h"
 
+
 buffer_t *buffer_init() {
     return (buffer_t *) calloc(1, sizeof(buffer_t));
 }

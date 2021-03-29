@@ -183,7 +183,6 @@ void read_write_loop_sender(const int sfd, const int fdIn){
         pfds[0].events = POLLIN;
         pfds[1].fd = sfd;
         pfds[1].events = POLLIN | POLLOUT;
-
         ready = poll(pfds,nfds,10 * 1000);
         if(ready == -1){
             ERROR("Poll error");
